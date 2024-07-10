@@ -3,23 +3,23 @@ use core::fmt;
 /// Length of a string-encoded Ulys
 pub const ULYS_LEN: usize = 26;
 
-const ALPHABET: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+const ALPHABET: &[u8; 32] = b"0123456789abcdefghjkmnpqrstvwxyz";
 
 const NO_VALUE: u8 = 255;
 const LOOKUP: [u8; 256] = [
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 255, 255, 255,
-    255, 255, 255, 255, 10, 11, 12, 13, 14, 15, 16, 17, 255, 18, 19, 255, 20, 21, 255, 22, 23, 24,
-    25, 26, 255, 27, 28, 29, 30, 31, 255, 255, 255, 255, 255, 255, 10, 11, 12, 13, 14, 15, 16, 17,
-    255, 18, 19, 255, 20, 21, 255, 22, 23, 24, 25, 26, 255, 27, 28, 29, 30, 31, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 10, 11,
+    12, 13, 14, 15, 16, 17, 255, 18, 19, 255, 20, 21, 255, 22, 23, 24, 25, 26, 255, 27, 28, 29, 30,
+    31, 255, 255, 255, 255, 255, 255, 10, 11, 12, 13, 14, 15, 16, 17, 255, 18, 19, 255, 20, 21,
+    255, 22, 23, 24, 25, 26, 255, 27, 28, 29, 30, 31, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 ];
 
 /// Generator code for `LOOKUP`
@@ -148,12 +148,12 @@ mod tests {
 
     #[test]
     fn test_valid() {
-        let val = 0x41414141414141414141414141414141;
-        assert_eq!(decode("21850M2GA1850M2GA1850M2GA1").unwrap(), val);
-        assert_eq!(encode(val), "21850M2GA1850M2GA1850M2GA1");
+        let val = 0x4141_4141_4141_4141_4141_4141_4141_4141;
+        assert_eq!(decode("21850m2ga1850m2ga1850m2ga1").unwrap(), val);
+        assert_eq!(encode(val), "21850m2ga1850m2ga1850m2ga1");
 
-        let val = 0x4d4e385051444a59454234335a413756;
-        let enc = "2D9RW50MA499CMAGHM6DD42DTP";
+        let val = 0x4d4e_3850_5144_4a59_4542_3433_5a41_3756;
+        let enc = "2d9rw50ma499cmaghm6dd42dtp";
         let lower = enc.to_lowercase();
         assert_eq!(encode(val), enc);
         assert_eq!(decode(enc).unwrap(), val);
@@ -162,43 +162,52 @@ mod tests {
 
     #[test]
     fn test_length() {
-        assert_eq!(encode(0xffffffffffffffffffffffffffffffff).len(), ULYS_LEN);
-        assert_eq!(encode(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f).len(), ULYS_LEN);
-        assert_eq!(encode(0x00000000000000000000000000000000).len(), ULYS_LEN);
+        assert_eq!(
+            encode(0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff).len(),
+            ULYS_LEN
+        );
+        assert_eq!(
+            encode(0x0f0f_0f0f_0f0f_0f0f_0f0f_0f0f_0f0f_0f0f).len(),
+            ULYS_LEN
+        );
+        assert_eq!(
+            encode(0x0000_0000_0000_0000_0000_0000_0000_0000).len(),
+            ULYS_LEN
+        );
 
         assert_eq!(decode(""), Err(DecodeError::InvalidLength));
         assert_eq!(
-            decode("2D9RW50MA499CMAGHM6DD42DT"),
+            decode("2d9rw50ma499cmaghm6dd42dt"),
             Err(DecodeError::InvalidLength)
         );
         assert_eq!(
-            decode("2D9RW50MA499CMAGHM6DD42DTPP"),
+            decode("2d9rw50ma499cmaghm6dd42dtpP"),
             Err(DecodeError::InvalidLength)
         );
     }
 
     #[test]
     fn test_chars() {
-        for ref c in encode(0xffffffffffffffffffffffffffffffff).bytes() {
+        for ref c in encode(0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff).bytes() {
             assert!(ALPHABET.contains(c));
         }
-        for ref c in encode(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f).bytes() {
+        for ref c in encode(0x0f0f_0f0f_0f0f_0f0f_0f0f_0f0f_0f0f_0f0f).bytes() {
             assert!(ALPHABET.contains(c));
         }
-        for ref c in encode(0x00000000000000000000000000000000).bytes() {
+        for ref c in encode(0x0000_0000_0000_0000_0000_0000_0000_0000).bytes() {
             assert!(ALPHABET.contains(c));
         }
 
         assert_eq!(
-            decode("2D9RW50[A499CMAGHM6DD42DTP"),
+            decode("2d9rw50[a499cmaghm6dd42dtp"),
             Err(DecodeError::InvalidChar)
         );
         assert_eq!(
-            decode("2D9RW50LA499CMAGHM6DD42DTP"),
+            decode("2d9rw50la499cmaghm6dd42dtp"),
             Err(DecodeError::InvalidChar)
         );
         assert_eq!(
-            decode("2D9RW50IA499CMAGHM6DD42DTP"),
+            decode("2d9rw50ia499cmaghm6dd42dtp"),
             Err(DecodeError::InvalidChar)
         );
     }
