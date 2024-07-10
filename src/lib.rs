@@ -90,7 +90,7 @@ impl Ulys {
     /// ```rust
     /// use ulys::Ulys;
     ///
-    /// let ulys = Ulys::from_string("01D39ZY06FGSCTVN4T2V9PKHFZ").unwrap();
+    /// let ulys = Ulys::from_string("01d39zy06fgsctvn4t2v9pkhfz").unwrap();
     ///
     /// let ulys2 = Ulys::from_parts(ulys.timestamp_ms(), ulys.random());
     ///
@@ -104,14 +104,14 @@ impl Ulys {
 
     /// Creates a Ulys from a Crockford Base32 encoded string
     ///
-    /// An DecodeError will be returned when the given string is not formatted
+    /// An `DecodeError` will be returned when the given string is not formatted
     /// properly.
     ///
     /// # Example
     /// ```rust
     /// use ulys::Ulys;
     ///
-    /// let text = "01D39ZY06FGSCTVN4T2V9PKHFZ";
+    /// let text = "01d39zy06fgsctvn4t2v9pkhfz";
     /// let result = Ulys::from_string(text);
     ///
     /// assert!(result.is_ok());
@@ -168,7 +168,7 @@ impl Ulys {
     /// ```rust
     /// use ulys::Ulys;
     ///
-    /// let text = "01D39ZY06FGSCTVN4T2V9PKHFZ";
+    /// let text = "01d39zy06fgsctvn4t2v9pkhfz";
     /// let ulys = Ulys::from_string(text).unwrap();
     /// let ulys_next = ulys.increment().unwrap();
     ///
@@ -184,11 +184,11 @@ impl Ulys {
     /// ```rust
     /// use ulys::Ulys;
     ///
-    /// let text = "01D39ZY06FGSCTVN4T2V9PKHFZ";
+    /// let text = "01d39zy06fgsctvn4t2v9pkhfz";
     /// let ulys = Ulys::from_string(text).unwrap();
     ///
     /// let mut buf = [0; ulys::ULYS_LEN];
-    /// let new_text = ulys.to_str(&mut buf).unwrap();
+    /// let new_text = ulys.array_to_str(&mut buf);
     ///
     /// assert_eq!(new_text, text);
     /// ```
@@ -205,7 +205,7 @@ impl Ulys {
     /// ```rust
     /// use ulys::Ulys;
     ///
-    /// let text = "01D39ZY06FGSCTVN4T2V9PKHFZ";
+    /// let text = "01d39zy06fgsctvn4t2v9pkhfz";
     /// let ulys = Ulys::from_string(text).unwrap();
     ///
     /// let mut buf = [0; ulys::ULYS_LEN];
@@ -224,7 +224,7 @@ impl Ulys {
     /// ```rust
     /// use ulys::Ulys;
     ///
-    /// let text = "01D39ZY06FGSCTVN4T2V9PKHFZ";
+    /// let text = "01d39zy06fgsctvn4t2v9pkhfz";
     /// let ulys = Ulys::from_string(text).unwrap();
     ///
     /// assert_eq!(&ulys.to_string(), text);
@@ -276,7 +276,7 @@ impl Ulys {
     ///
     /// assert_eq!(
     ///     ulys.to_string(),
-    ///     "7ZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    ///     "7zzzzzzzzzzzzzzzzzzzzzzzzz"
     /// );
     /// ```
     pub const fn from_bytes(bytes: [u8; 16]) -> Ulys {
@@ -289,7 +289,7 @@ impl Ulys {
     /// ```
     /// use ulys::Ulys;
     ///
-    /// let text = "7ZZZZZZZZZZZZZZZZZZZZZZZZZ";
+    /// let text = "7zzzzzzzzzzzzzzzzzzzzzzzzz";
     /// let ulys = Ulys::from_string(text).unwrap();
     ///
     /// assert_eq!(ulys.to_bytes(), [0xFF; 16]);
@@ -369,35 +369,35 @@ mod tests {
 
     #[test]
     fn test_static() {
-        let s = Ulys(0x41414141414141414141414141414141).to_string();
+        let s = Ulys(0x4141_4141_4141_4141_4141_4141_4141_4141).to_string();
         let u = Ulys::from_string(&s).unwrap();
-        assert_eq!(&s, "21850M2GA1850M2GA1850M2GA1");
-        assert_eq!(u.0, 0x41414141414141414141414141414141);
+        assert_eq!(&s, "21850m2ga1850m2ga1850m2ga1");
+        assert_eq!(u.0, 0x4141_4141_4141_4141_4141_4141_4141_4141);
     }
 
     #[test]
     fn test_increment() {
-        let ulys = Ulys::from_string("01BX5ZZKBKAZZZZZZZZZZZZZZZ").unwrap();
+        let ulys = Ulys::from_string("01bx5zzkbkazzzzzzzzzzzzzzz").unwrap();
         let ulys = ulys.increment().unwrap();
-        assert_eq!("01BX5ZZKBKB000000000000000", ulys.to_string());
+        assert_eq!("01bx5zzkbkb000000000000000", ulys.to_string());
 
-        let ulys = Ulys::from_string("01BX5ZZKBKZZZZZZZZZZZZZZZX").unwrap();
+        let ulys = Ulys::from_string("01bx5zzkbkzzzzzzzzzzzzzzzx").unwrap();
         let ulys = ulys.increment().unwrap();
-        assert_eq!("01BX5ZZKBKZZZZZZZZZZZZZZZY", ulys.to_string());
+        assert_eq!("01bx5zzkbkzzzzzzzzzzzzzzzy", ulys.to_string());
         let ulys = ulys.increment().unwrap();
-        assert_eq!("01BX5ZZKBKZZZZZZZZZZZZZZZZ", ulys.to_string());
+        assert_eq!("01bx5zzkbkzzzzzzzzzzzzzzzz", ulys.to_string());
         assert!(ulys.increment().is_none());
     }
 
     #[test]
     fn test_increment_overflow() {
-        let ulys = Ulys(u128::max_value());
+        let ulys = Ulys(u128::MAX);
         assert!(ulys.increment().is_none());
     }
 
     #[test]
     fn can_into_thing() {
-        let ulys = Ulys::from_str("01FKMG6GAG0PJANMWFN84TNXCD").unwrap();
+        let ulys = Ulys::from_str("01fkmg6gag0pjanmwfn84tnxcd").unwrap();
         let s: String = ulys.into();
         let u: u128 = ulys.into();
         let uu: (u64, u64) = ulys.into();

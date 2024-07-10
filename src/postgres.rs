@@ -5,7 +5,6 @@ use postgres_types::accepts;
 use postgres_types::to_sql_checked;
 use postgres_types::{FromSql, IsNull, ToSql, Type};
 use std::error::Error;
-use std::u128;
 
 impl FromSql<'_> for Ulys {
     fn from_sql(_ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn Error + Sync + Send>> {
@@ -21,7 +20,7 @@ impl FromSql<'_> for Ulys {
 
 impl ToSql for Ulys {
     fn to_sql(&self, _: &Type, w: &mut BytesMut) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
-        let bytes: u128 = self.0.into();
+        let bytes: u128 = self.0;
         w.put_slice(&bytes.to_be_bytes());
         Ok(IsNull::No)
     }
@@ -39,7 +38,7 @@ mod tests {
 
     #[test]
     fn postgres_cycle() {
-        let ulys = Ulys::from_string("3Q38XWW0Q98GMAD3NHWZM2PZWZ").unwrap();
+        let ulys = Ulys::from_string("3q38xww0q98gmad3nhwzm2pzwz").unwrap();
 
         let mut w = bytes::BytesMut::new();
         let t = &Type::UUID;

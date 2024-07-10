@@ -6,7 +6,7 @@ authors = ["dylanhart <dylan96hart@gmail.com>", "Kan-Ru Chen <kanru@kanru.info>"
 license = "MIT"
 readme = "../README.md"
 
-description = "A command line interface for generating and inspecting ULIDs"
+description = "A command line interface for generating and inspecting ULYSes"
 keywords = ["ulys", "ulid", "uuid", "sortable", "identifier"]
 
 repository = "https://github.com/ystorian/ulys"
@@ -14,6 +14,6 @@ repository = "https://github.com/ystorian/ulys"
 edition = "2021"
 
 [dependencies]
-structopt = "0.2"
+structopt = "0.3"
 ulys = { version = "*", path = ".." }
 time = "0.3.11"
