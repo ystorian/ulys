@@ -14,6 +14,6 @@ repository = "https://github.com/ystorian/ulys"
 edition = "2021"
 
 [dependencies]
-structopt = "0.2"
+structopt = "0.3"
 ulys = { version = "*", path = ".." }
 time = "0.3.11"
