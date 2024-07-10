@@ -28,10 +28,10 @@ const LOOKUP: [u8; 256] = [
 fn test_lookup_table() {
     let mut lookup = [NO_VALUE; 256];
     for (i, &c) in ALPHABET.iter().enumerate() {
-        lookup[c as usize] = i as u8;
+        lookup[c as usize] = u8::try_from(i).unwrap();
         if !(c as char).is_numeric() {
             //lowercase
-            lookup[(c + 32) as usize] = i as u8;
+            lookup[(c + 32) as usize] = u8::try_from(i).unwrap();
         }
     }
     assert_eq!(LOOKUP, lookup);
@@ -52,7 +52,7 @@ impl fmt::Display for EncodeError {
         let text = match *self {
             EncodeError::BufferTooSmall => "buffer too small",
         };
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }
 
@@ -113,7 +113,7 @@ impl fmt::Display for DecodeError {
             DecodeError::InvalidLength => "invalid length",
             DecodeError::InvalidChar => "invalid character",
         };
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }
 
@@ -130,11 +130,12 @@ pub const fn decode(encoded: &str) -> Result<u128, DecodeError> {
     let mut i = 0;
     while i < ULYS_LEN {
         let val = LOOKUP[bytes[i] as usize];
-        if val != NO_VALUE {
-            value = (value << 5) | val as u128;
-        } else {
+        if val == NO_VALUE {
             return Err(DecodeError::InvalidChar);
         }
+
+        value = (value << 5) | val as u128;
+
         i += 1;
     }
 

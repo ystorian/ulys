@@ -45,7 +45,7 @@ impl Generator {
         self.generate_from_datetime(crate::time_utils::now())
     }
 
-    /// Generate a new Ulys matching the given DateTime.
+    /// Generate a new Ulys matching the given `DateTime`.
     /// Each call is guaranteed to provide a Ulys with a larger value than the last call.
     /// If the random bits would overflow, this method will return an error.
     ///
@@ -93,7 +93,7 @@ impl Generator {
         self.generate_from_datetime_with_source(crate::time_utils::now(), source)
     }
 
-    /// Generate a new monotonic increasing Ulys with the given source matching the given DateTime
+    /// Generate a new monotonic increasing Ulys with the given source matching the given `DateTime`
     /// Each call is guaranteed to provide a Ulys with a larger value than the last call.
     /// If the random bits would overflow, this method will return an error.
     ///
@@ -133,9 +133,9 @@ impl Generator {
             if let Some(next) = self.previous.increment() {
                 self.previous = next;
                 return Ok(next);
-            } else {
-                return Err(MonotonicError::Overflow);
             }
+
+            return Err(MonotonicError::Overflow);
         }
         let next = Ulys::from_datetime_with_source(datetime, source);
         self.previous = next;
@@ -163,7 +163,7 @@ impl fmt::Display for MonotonicError {
         let text = match *self {
             MonotonicError::Overflow => "Ulys random bits would overflow",
         };
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }
 
@@ -181,7 +181,7 @@ mod tests {
         let ulys3 = Ulys::from_datetime(dt + Duration::from_millis(1));
         assert_eq!(ulys1.0 + 1, ulys2.0);
         assert!(ulys2 < ulys3);
-        assert!(ulys2.timestamp_ms() < ulys3.timestamp_ms())
+        assert!(ulys2.timestamp_ms() < ulys3.timestamp_ms());
     }
 
     #[test]

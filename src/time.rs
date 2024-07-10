@@ -5,7 +5,7 @@ impl Ulys {
     /// Creates a new Ulys with the current time (UTC)
     ///
     /// Using this function to generate Ulyss will not guarantee monotonic sort order.
-    /// See [ulys::Generator] for a monotonic sort order.
+    /// See `ulys::Generator` for a monotonic sort order.
     /// # Example
     /// ```rust
     /// use ulys::Ulys;
@@ -108,9 +108,9 @@ mod tests {
         let encoded = ulys.to_string();
         let ulys2 = Ulys::from_string(&encoded).expect("failed to deserialize");
 
-        println!("{}", encoded);
-        println!("{:?}", ulys);
-        println!("{:?}", ulys2);
+        println!("{encoded}");
+        println!("{ulys:?}");
+        println!("{ulys2:?}");
         assert_eq!(ulys, ulys2);
     }
 
