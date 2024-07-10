@@ -1,26 +1,26 @@
 //! Serialization and deserialization.
 //!
-//! By default, serialization and deserialization go through ULID's 26-character
+//! By default, serialization and deserialization go through ULYSes 26-character
 //! canonical string representation as set by the ULID standard.
 //!
-//! ULIDs can optionally be serialized as u128 integers using the `ulid_as_u128`
+//! ULYSes can optionally be serialized as u128 integers using the `ulys_as_u128`
 //! module. See the module's documentation for examples.
 
-use crate::{Ulid, ULID_LEN};
+use crate::{Ulys, ULYS_LEN};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-impl Serialize for Ulid {
+impl Serialize for Ulys {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut buffer = [0; ULID_LEN];
+        let mut buffer = [0; ULYS_LEN];
         let text = self.array_to_str(&mut buffer);
         text.serialize(serializer)
     }
 }
 
-impl<'de> Deserialize<'de> for Ulid {
+impl<'de> Deserialize<'de> for Ulys {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -30,72 +30,72 @@ impl<'de> Deserialize<'de> for Ulid {
     }
 }
 
-/// Serialization and deserialization of ULIDs through their inner u128 type.
+/// Serialization and deserialization of ULYSes through their inner u128 type.
 ///
 /// To use it, annotate a field with
-/// `#[serde(with = "ulid_as_u128")]`,
-/// `#[serde(serialize_with = "ulid_as_u128")]`, or
-/// `#[serde(deserialize_with = "ulid_as_u128")]`.
+/// `#[serde(with = "ulys_as_u128")]`,
+/// `#[serde(serialize_with = "ulys_as_u128")]`, or
+/// `#[serde(deserialize_with = "ulys_as_u128")]`.
 ///
 /// # Examples
 /// ```
-/// # use ulid::Ulid;
-/// # use ulid::serde::ulid_as_u128;
+/// # use ulys::Ulys;
+/// # use ulys::serde::ulys_as_u128;
 /// # use serde_derive::{Serialize, Deserialize};
 /// #[derive(Serialize, Deserialize)]
 /// struct U128Example {
-///     #[serde(with = "ulid_as_u128")]
-///     identifier: Ulid
+///     #[serde(with = "ulys_as_u128")]
+///     identifier: Ulys
 /// }
 /// ```
-pub mod ulid_as_u128 {
-    use crate::Ulid;
+pub mod ulys_as_u128 {
+    use crate::Ulys;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    /// Serializes a ULID as a u128 type.
-    pub fn serialize<S>(value: &Ulid, serializer: S) -> Result<S::Ok, S::Error>
+    /// Serializes a ULYS as a u128 type.
+    pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         value.0.serialize(serializer)
     }
 
-    /// Deserializes a ULID from a u128 type.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulid, D::Error>
+    /// Deserializes a ULYS from a u128 type.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
     where
         D: Deserializer<'de>,
     {
         let deserialized_u128 = u128::deserialize(deserializer)?;
-        Ok(Ulid(deserialized_u128))
+        Ok(Ulys(deserialized_u128))
     }
 }
 
-/// Serialization and deserialization of ULIDs through UUID strings.
+/// Serialization and deserialization of ULYSes through UUID strings.
 ///
 /// To use this module, annotate a field with
-/// `#[serde(with = "ulid_as_uuid")]`,
-/// `#[serde(serialize_with = "ulid_as_uuid")]`, or
-/// `#[serde(deserialize_with = "ulid_as_uuid")]`.
+/// `#[serde(with = "ulys_as_uuid")]`,
+/// `#[serde(serialize_with = "ulys_as_uuid")]`, or
+/// `#[serde(deserialize_with = "ulys_as_uuid")]`.
 ///
 /// # Examples
 /// ```
-/// # use ulid::Ulid;
-/// # use ulid::serde::ulid_as_uuid;
+/// # use ulys::Ulys;
+/// # use ulys::serde::ulys_as_uuid;
 /// # use serde_derive::{Serialize, Deserialize};
 /// #[derive(Serialize, Deserialize)]
 /// struct UuidExample {
-///     #[serde(with = "ulid_as_uuid")]
-///     identifier: Ulid
+///     #[serde(with = "ulys_as_uuid")]
+///     identifier: Ulys
 /// }
 /// ```
 #[cfg(all(feature = "uuid", feature = "serde"))]
-pub mod ulid_as_uuid {
-    use crate::Ulid;
+pub mod ulys_as_uuid {
+    use crate::Ulys;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use uuid::Uuid;
 
-    /// Converts the ULID to a UUID and serializes it as a string.
-    pub fn serialize<S>(value: &Ulid, serializer: S) -> Result<S::Ok, S::Error>
+    /// Converts the ULYS to a UUID and serializes it as a string.
+    pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -103,13 +103,13 @@ pub mod ulid_as_uuid {
         uuid.to_string().serialize(serializer)
     }
 
-    /// Deserializes a ULID from a string containing a UUID.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulid, D::Error>
+    /// Deserializes a ULYS from a string containing a UUID.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
     where
         D: Deserializer<'de>,
     {
         let de_string = String::deserialize(deserializer)?;
         let de_uuid = Uuid::parse_str(&de_string).map_err(serde::de::Error::custom)?;
-        Ok(Ulid::from(de_uuid))
+        Ok(Ulys::from(de_uuid))
     }
 }

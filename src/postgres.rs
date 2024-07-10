@@ -1,4 +1,4 @@
-use crate::Ulid;
+use crate::Ulys;
 use bytes::BufMut;
 use bytes::BytesMut;
 use postgres_types::accepts;
@@ -7,19 +7,19 @@ use postgres_types::{FromSql, IsNull, ToSql, Type};
 use std::error::Error;
 use std::u128;
 
-impl FromSql<'_> for Ulid {
+impl FromSql<'_> for Ulys {
     fn from_sql(_ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn Error + Sync + Send>> {
         if raw.len() != 16 {
             return Err("invalid message length: uuid size mismatch".into());
         }
         let mut bytes = [0; 16];
         bytes.copy_from_slice(raw);
-        Ok(Ulid(u128::from_be_bytes(bytes)))
+        Ok(Ulys(u128::from_be_bytes(bytes)))
     }
     accepts!(UUID);
 }
 
-impl ToSql for Ulid {
+impl ToSql for Ulys {
     fn to_sql(&self, _: &Type, w: &mut BytesMut) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
         let bytes: u128 = self.0.into();
         w.put_slice(&bytes.to_be_bytes());
@@ -33,22 +33,22 @@ impl ToSql for Ulid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Ulid;
+    use crate::Ulys;
     use postgres_types::{FromSql, Type};
     use std::io::Read;
 
     #[test]
     fn postgres_cycle() {
-        let ulid = Ulid::from_string("3Q38XWW0Q98GMAD3NHWZM2PZWZ").unwrap();
+        let ulys = Ulys::from_string("3Q38XWW0Q98GMAD3NHWZM2PZWZ").unwrap();
 
         let mut w = bytes::BytesMut::new();
         let t = &Type::UUID;
-        let _ = ulid.to_sql(t, &mut w);
+        let _ = ulys.to_sql(t, &mut w);
 
         assert_eq!(16, w.len());
 
         let bs = w.bytes().map(|v| v.unwrap()).collect::<Vec<u8>>();
 
-        assert_eq!(ulid, Ulid::from_sql(t, &bs).unwrap());
+        assert_eq!(ulys, Ulys::from_sql(t, &bs).unwrap());
     }
 }

@@ -1,17 +1,17 @@
-//! Conversions between ULID and UUID.
+//! Conversions between ULYS and UUID.
 
-use crate::Ulid;
+use crate::Ulys;
 use uuid::Uuid;
 
-impl From<Uuid> for Ulid {
+impl From<Uuid> for Ulys {
     fn from(uuid: Uuid) -> Self {
-        Ulid(uuid.as_u128())
+        Ulys(uuid.as_u128())
     }
 }
 
-impl From<Ulid> for Uuid {
-    fn from(ulid: Ulid) -> Self {
-        Uuid::from_u128(ulid.0)
+impl From<Ulys> for Uuid {
+    fn from(ulys: Ulys) -> Self {
+        Uuid::from_u128(ulys.0)
     }
 }
 
@@ -21,22 +21,22 @@ mod test {
 
     #[test]
     fn uuid_cycle() {
-        let ulid = Ulid::new();
-        let uuid: Uuid = ulid.into();
-        let ulid2: Ulid = uuid.into();
+        let ulys = Ulys::new();
+        let uuid: Uuid = ulys.into();
+        let ulys2: Ulys = uuid.into();
 
-        assert_eq!(ulid, ulid2);
+        assert_eq!(ulys, ulys2);
     }
 
     #[test]
     fn uuid_str_cycle() {
         let uuid_txt = "771a3bce-02e9-4428-a68e-b1e7e82b7f9f";
-        let ulid_txt = "3Q38XWW0Q98GMAD3NHWZM2PZWZ";
+        let ulys_txt = "3Q38XWW0Q98GMAD3NHWZM2PZWZ";
 
-        let ulid: Ulid = Uuid::parse_str(uuid_txt).unwrap().into();
-        assert_eq!(ulid.to_string(), ulid_txt);
+        let ulys: Ulys = Uuid::parse_str(uuid_txt).unwrap().into();
+        assert_eq!(ulys.to_string(), ulys_txt);
 
-        let uuid: Uuid = ulid.into();
+        let uuid: Uuid = ulys.into();
         assert_eq!(uuid.to_string(), uuid_txt);
     }
 }

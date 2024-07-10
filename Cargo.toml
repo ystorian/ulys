@@ -1,16 +1,16 @@
 [package]
-name = "ulid"
+name = "ulys"
 version = "1.1.2"
-authors = ["dylanhart <dylan96hart@gmail.com>"]
-edition = "2018"
+authors = ["dylanhart <dylan96hart@gmail.com>", "adriantombu <adrian@ystorian.com>"]
+edition = "2021"
 
 license = "MIT"
 readme = "README.md"
 
-description = "a Universally Unique Lexicographically Sortable Identifier implementation"
-keywords = ["ulid", "uuid", "sortable", "identifier"]
+description = "a Universally Unique Lexicographically Sortable Identifier implementation, with a checksum"
+keywords = ["ulys", "ulid", "uuid", "sortable", "identifier"]
 
-repository = "https://github.com/dylanhart/ulid-rs"
+repository = "https://github.com/ystorian/ulys"
 
 [features]
 default = ["std"]

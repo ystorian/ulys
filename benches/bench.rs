@@ -1,9 +1,9 @@
 use bencher::{benchmark_group, benchmark_main, Bencher};
 use std::time::SystemTime;
-use ulid::{Generator, Ulid, ULID_LEN};
+use ulys::{Generator, Ulys, ULYS_LEN};
 
 fn bench_new(b: &mut Bencher) {
-    b.iter(Ulid::new);
+    b.iter(Ulys::new);
 }
 
 fn bench_generator_generate(b: &mut Bencher) {
@@ -13,29 +13,29 @@ fn bench_generator_generate(b: &mut Bencher) {
 
 fn bench_from_time(b: &mut Bencher) {
     let time = SystemTime::now();
-    b.iter(|| Ulid::from_datetime(time));
+    b.iter(|| Ulys::from_datetime(time));
 }
 
 fn bench_to_str(b: &mut Bencher) {
-    let ulid = Ulid::new();
+    let ulys = Ulys::new();
     b.iter(|| {
-        let mut buffer = [0; ULID_LEN];
-        ulid.array_to_str(&mut buffer);
+        let mut buffer = [0; ULYS_LEN];
+        ulys.array_to_str(&mut buffer);
     });
 }
 
 fn bench_to_string(b: &mut Bencher) {
-    let ulid = Ulid::new();
-    b.iter(|| ulid.to_string());
+    let ulys = Ulys::new();
+    b.iter(|| ulys.to_string());
 }
 
 fn bench_from_string(b: &mut Bencher) {
-    let s = Ulid::new().to_string();
-    b.iter(|| Ulid::from_string(&s).unwrap());
+    let s = Ulys::new().to_string();
+    b.iter(|| Ulys::from_string(&s).unwrap());
 }
 
 benchmark_group!(
-    ulid_perf,
+    ulys_perf,
     bench_new,
     bench_generator_generate,
     bench_from_time,
@@ -44,4 +44,4 @@ benchmark_group!(
     bench_from_string
 );
 
-benchmark_main!(ulid_perf);
+benchmark_main!(ulys_perf);
