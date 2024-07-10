@@ -1,38 +1,37 @@
-# ulid-rs
+# ulys
 
-![Build Status](https://github.com/dylanhart/ulid-rs/actions/workflows/ci-build.yml/badge.svg)
-[![Crates.io](https://img.shields.io/crates/v/ulid.svg)](https://crates.io/crates/ulid)
-[![docs.rs](https://docs.rs/ulid/badge.svg)](https://docs.rs/ulid)
+![Build Status](https://github.com/ystorian/ulys/actions/workflows/ci-build.yml/badge.svg)
+[![Crates.io](https://img.shields.io/crates/v/ulys.svg)](https://crates.io/crates/ulys)
+[![docs.rs](https://docs.rs/ulys/badge.svg)](https://docs.rs/ulys)
 
-This is a Rust implementation of the [ulid][ulid] project which provides
-Universally Unique Lexicographically Sortable Identifiers.
+This is an adaptation of the Rust implementation of the [ulid][ulid] project which provides Universally Unique Lexicographically Sortable Identifiers, with a checksum.
 
 [ulid]: https://github.com/ulid/spec
 
 ## Quickstart
 
 ```rust
-use ulid::Ulid;
+use ulys::Ulys;
 
-// Generate a ulid
-let ulid = Ulid::new();
+// Generate a ulys
+let ulys = Ulys::new();
 
-// Generate a string for a ulid
-let s = ulid.to_string();
+// Generate a string for a ulys
+let s = ulys.to_string();
 
 // Create from a String
-let res = Ulid::from_string(&s);
+let res = Ulys::from_string(&s);
 
-assert_eq!(ulid, res.unwrap());
+assert_eq!(ulys, res.unwrap());
 ```
 
 ## Crate Features
 
 * **`std` (default)**: Flag to toggle use of `std` and `rand`. Disable this flag for `#[no_std]` support.
-* **`serde`**: Enables serialization and deserialization of `Ulid` types via `serde`. ULIDs are serialized using their canonical 26-character representation as defined in the ULID standard. An optional `ulid_as_u128` module is provided, which enables serialization through an `Ulid`'s inner `u128` primitive type. See the [documentation][serde_mod] and [serde docs][serde_docs] for more information.
-* **`uuid`**: Implements infallible conversions between ULIDs and UUIDs from the [`uuid`][uuid] crate via the [`std::convert::From`][trait_from] trait.
+* **`serde`**: Enables serialization and deserialization of `Ulys` types via `serde`. ULYSs are serialized using their canonical 26-character representation as defined in the ULID standard. An optional `ulys_as_u128` module is provided, which enables serialization through an `Ulys`'s inner `u128` primitive type. See the [documentation][serde_mod] and [serde docs][serde_docs] for more information.
+* **`uuid`**: Implements infallible conversions between ULYSs and UUIDs from the [`uuid`][uuid] crate via the [`std::convert::From`][trait_from] trait.
 
-[serde_mod]: https://docs.rs/ulid/latest/ulid/serde/index.html
+[serde_mod]: https://docs.rs/ulys/latest/ulys/serde/index.html
 [serde_docs]: https://serde.rs/field-attrs.html#with
 [uuid]: https://github.com/uuid-rs/uuid
 [trait_from]: https://doc.rust-lang.org/std/convert/trait.From.html

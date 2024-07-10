@@ -1,28 +1,28 @@
 extern crate structopt;
 
 use std::io::{self, Write};
-use ulid::{Generator, Ulid};
+use ulys::{Generator, Ulys};
 
 use std::{thread, time::Duration};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
-    /// Number of ULIDs to generate
+    /// Number of ULYSes to generate
     #[structopt(short = "n", long = "count", default_value = "1")]
     count: u32,
     #[structopt(short = "m", long = "monotonic")]
     monotonic: bool,
-    /// ULIDs for inspection
+    /// ULYSes for inspection
     #[structopt(conflicts_with = "count")]
-    ulids: Vec<String>,
+    ulyses: Vec<String>,
 }
 
 fn main() {
     let opt = Opt::from_args();
 
-    if !opt.ulids.is_empty() {
-        inspect(&opt.ulids);
+    if !opt.ulyses.is_empty() {
+        inspect(&opt.ulyses);
     } else {
         generate(opt.count, opt.monotonic);
     }
@@ -38,14 +38,14 @@ fn generate(count: u32, monotonic: bool) {
         let mut i = 0;
         while i < count {
             match gen.generate() {
-                Ok(ulid) => {
-                    writeln!(&mut locked, "{}", ulid).unwrap();
+                Ok(ulys) => {
+                    writeln!(&mut locked, "{}", ulys).unwrap();
                     i += 1;
                 }
                 Err(_) => {
                     writeln!(
                         &mut err_locked,
-                        "Failed to create new ulid due to overflow, sleeping 1 ms"
+                        "Failed to create new ulys due to overflow, sleeping 1 ms"
                     )
                     .unwrap();
                     thread::sleep(Duration::from_millis(1));
@@ -55,17 +55,17 @@ fn generate(count: u32, monotonic: bool) {
         }
     } else {
         for _ in 0..count {
-            writeln!(&mut locked, "{}", Ulid::new()).unwrap();
+            writeln!(&mut locked, "{}", Ulys::new()).unwrap();
         }
     }
 }
 
 fn inspect(values: &[String]) {
     for val in values {
-        let ulid = Ulid::from_string(val);
-        match ulid {
-            Ok(ulid) => {
-                let upper_hex = format!("{:X}", ulid.0);
+        let ulys = Ulys::from_string(val);
+        match ulys {
+            Ok(ulys) => {
+                let upper_hex = format!("{:X}", ulys.0);
                 println!(
                     "
 REPRESENTATION:
@@ -79,15 +79,15 @@ COMPONENTS:
   Timestamp: {}
     Payload: {}
 ",
-                    ulid.to_string(),
+                    ulys.to_string(),
                     upper_hex,
-                    time::OffsetDateTime::from(ulid.datetime()),
-                    ulid.timestamp_ms(),
+                    time::OffsetDateTime::from(ulys.datetime()),
+                    ulys.timestamp_ms(),
                     upper_hex.chars().skip(6).collect::<String>()
                 );
             }
             Err(e) => {
-                println!("{} is not a valid ULID: {}", val, e);
+                println!("{} is not a valid ULYS: {}", val, e);
             }
         }
     }

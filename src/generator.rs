@@ -2,104 +2,104 @@ use std::time::{Duration, SystemTime};
 
 use std::fmt;
 
-use crate::Ulid;
+use crate::Ulys;
 
-/// A Ulid generator that provides monotonically increasing Ulids
+/// A Ulys generator that provides monotonically increasing Ulyses
 pub struct Generator {
-    previous: Ulid,
+    previous: Ulys,
 }
 
 impl Generator {
-    /// Create a new ulid generator for monotonically ordered ulids
+    /// Create a new ulys generator for monotonically ordered Ulyses
     ///
     /// # Example
     /// ```rust
-    /// use ulid::Generator;
+    /// use ulys::Generator;
     ///
     /// let mut gen = Generator::new();
     ///
-    /// let ulid1 = gen.generate().unwrap();
-    /// let ulid2 = gen.generate().unwrap();
+    /// let ulys1 = gen.generate().unwrap();
+    /// let ulys2 = gen.generate().unwrap();
     ///
-    /// assert!(ulid1 < ulid2);
+    /// assert!(ulys1 < ulys2);
     /// ```
     pub fn new() -> Generator {
         Generator {
-            previous: Ulid::nil(),
+            previous: Ulys::nil(),
         }
     }
 
-    /// Generate a new Ulid. Each call is guaranteed to provide a Ulid with a larger value than the
+    /// Generate a new Ulys. Each call is guaranteed to provide a Ulys with a larger value than the
     /// last call. If the random bits would overflow, this method will return an error.
     ///
     /// ```rust
-    /// use ulid::Generator;
+    /// use ulys::Generator;
     /// let mut gen = Generator::new();
     ///
-    /// let ulid1 = gen.generate().unwrap();
-    /// let ulid2 = gen.generate().unwrap();
+    /// let ulys1 = gen.generate().unwrap();
+    /// let ulys2 = gen.generate().unwrap();
     ///
-    /// assert!(ulid1 < ulid2);
+    /// assert!(ulys1 < ulys2);
     /// ```
-    pub fn generate(&mut self) -> Result<Ulid, MonotonicError> {
+    pub fn generate(&mut self) -> Result<Ulys, MonotonicError> {
         self.generate_from_datetime(crate::time_utils::now())
     }
 
-    /// Generate a new Ulid matching the given DateTime.
-    /// Each call is guaranteed to provide a Ulid with a larger value than the last call.
+    /// Generate a new Ulys matching the given DateTime.
+    /// Each call is guaranteed to provide a Ulys with a larger value than the last call.
     /// If the random bits would overflow, this method will return an error.
     ///
     /// # Example
     /// ```rust
-    /// use ulid::Generator;
+    /// use ulys::Generator;
     /// use std::time::SystemTime;
     ///
     /// let dt = SystemTime::now();
     /// let mut gen = Generator::new();
     ///
-    /// let ulid1 = gen.generate_from_datetime(dt).unwrap();
-    /// let ulid2 = gen.generate_from_datetime(dt).unwrap();
+    /// let ulys1 = gen.generate_from_datetime(dt).unwrap();
+    /// let ulys2 = gen.generate_from_datetime(dt).unwrap();
     ///
-    /// assert_eq!(ulid1.datetime(), ulid2.datetime());
-    /// assert!(ulid1 < ulid2);
+    /// assert_eq!(ulys1.datetime(), ulys2.datetime());
+    /// assert!(ulys1 < ulys2);
     /// ```
-    pub fn generate_from_datetime(&mut self, datetime: SystemTime) -> Result<Ulid, MonotonicError> {
+    pub fn generate_from_datetime(&mut self, datetime: SystemTime) -> Result<Ulys, MonotonicError> {
         self.generate_from_datetime_with_source(datetime, &mut rand::thread_rng())
     }
 
-    /// Generate a new monotonic increasing Ulid with the given source
-    /// Each call is guaranteed to provide a Ulid with a larger value than the last call.
+    /// Generate a new monotonic increasing Ulys with the given source
+    /// Each call is guaranteed to provide a Ulys with a larger value than the last call.
     /// If the random bits would overflow, this method will return an error.
     ///
     /// # Example
     /// ```rust
-    /// use ulid::Generator;
-    /// use ulid::Ulid;
+    /// use ulys::Generator;
+    /// use ulys::Ulys;
     /// use std::time::SystemTime;
     /// use rand::prelude::*;
     ///
     /// let mut rng = StdRng::from_entropy();
     /// let mut gen = Generator::new();
     ///
-    /// let ulid1 = gen.generate_with_source(&mut rng).unwrap();
-    /// let ulid2 = gen.generate_with_source(&mut rng).unwrap();
+    /// let ulys1 = gen.generate_with_source(&mut rng).unwrap();
+    /// let ulys2 = gen.generate_with_source(&mut rng).unwrap();
     ///
-    /// assert!(ulid1 < ulid2);
+    /// assert!(ulys1 < ulys2);
     /// ```
-    pub fn generate_with_source<R>(&mut self, source: &mut R) -> Result<Ulid, MonotonicError>
+    pub fn generate_with_source<R>(&mut self, source: &mut R) -> Result<Ulys, MonotonicError>
     where
         R: rand::Rng + ?Sized,
     {
         self.generate_from_datetime_with_source(crate::time_utils::now(), source)
     }
 
-    /// Generate a new monotonic increasing Ulid with the given source matching the given DateTime
-    /// Each call is guaranteed to provide a Ulid with a larger value than the last call.
+    /// Generate a new monotonic increasing Ulys with the given source matching the given DateTime
+    /// Each call is guaranteed to provide a Ulys with a larger value than the last call.
     /// If the random bits would overflow, this method will return an error.
     ///
     /// # Example
     /// ```rust
-    /// use ulid::Generator;
+    /// use ulys::Generator;
     /// use std::time::SystemTime;
     /// use rand::prelude::*;
     ///
@@ -107,17 +107,17 @@ impl Generator {
     /// let mut rng = StdRng::from_entropy();
     /// let mut gen = Generator::new();
     ///
-    /// let ulid1 = gen.generate_from_datetime_with_source(dt, &mut rng).unwrap();
-    /// let ulid2 = gen.generate_from_datetime_with_source(dt, &mut rng).unwrap();
+    /// let ulys1 = gen.generate_from_datetime_with_source(dt, &mut rng).unwrap();
+    /// let ulys2 = gen.generate_from_datetime_with_source(dt, &mut rng).unwrap();
     ///
-    /// assert_eq!(ulid1.datetime(), ulid2.datetime());
-    /// assert!(ulid1 < ulid2);
+    /// assert_eq!(ulys1.datetime(), ulys2.datetime());
+    /// assert!(ulys1 < ulys2);
     /// ```
     pub fn generate_from_datetime_with_source<R>(
         &mut self,
         datetime: SystemTime,
         source: &mut R,
-    ) -> Result<Ulid, MonotonicError>
+    ) -> Result<Ulys, MonotonicError>
     where
         R: rand::Rng + ?Sized,
     {
@@ -137,7 +137,7 @@ impl Generator {
                 return Err(MonotonicError::Overflow);
             }
         }
-        let next = Ulid::from_datetime_with_source(datetime, source);
+        let next = Ulys::from_datetime_with_source(datetime, source);
         self.previous = next;
         Ok(next)
     }
@@ -161,7 +161,7 @@ impl std::error::Error for MonotonicError {}
 impl fmt::Display for MonotonicError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         let text = match *self {
-            MonotonicError::Overflow => "Ulid random bits would overflow",
+            MonotonicError::Overflow => "Ulys random bits would overflow",
         };
         write!(f, "{}", text)
     }
@@ -176,12 +176,12 @@ mod tests {
     fn test_order_monotonic() {
         let dt = SystemTime::now();
         let mut gen = Generator::new();
-        let ulid1 = gen.generate_from_datetime(dt).unwrap();
-        let ulid2 = gen.generate_from_datetime(dt).unwrap();
-        let ulid3 = Ulid::from_datetime(dt + Duration::from_millis(1));
-        assert_eq!(ulid1.0 + 1, ulid2.0);
-        assert!(ulid2 < ulid3);
-        assert!(ulid2.timestamp_ms() < ulid3.timestamp_ms())
+        let ulys1 = gen.generate_from_datetime(dt).unwrap();
+        let ulys2 = gen.generate_from_datetime(dt).unwrap();
+        let ulys3 = Ulys::from_datetime(dt + Duration::from_millis(1));
+        assert_eq!(ulys1.0 + 1, ulys2.0);
+        assert!(ulys2 < ulys3);
+        assert!(ulys2.timestamp_ms() < ulys3.timestamp_ms())
     }
 
     #[test]
@@ -192,9 +192,9 @@ mod tests {
 
         let _has_default = Generator::default();
 
-        let ulid1 = gen.generate_with_source(&mut source).unwrap();
-        let ulid2 = gen.generate_with_source(&mut source).unwrap();
-        assert!(ulid1 < ulid2);
+        let ulys1 = gen.generate_with_source(&mut source).unwrap();
+        let ulys2 = gen.generate_with_source(&mut source).unwrap();
+        assert!(ulys1 < ulys2);
     }
 
     #[test]

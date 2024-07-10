@@ -1,7 +1,7 @@
 use core::fmt;
 
-/// Length of a string-encoded Ulid
-pub const ULID_LEN: usize = 26;
+/// Length of a string-encoded Ulys
+pub const ULYS_LEN: usize = 26;
 
 const ALPHABET: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -56,7 +56,7 @@ impl fmt::Display for EncodeError {
     }
 }
 
-/// Encode a u128 value to a given buffer. The provided buffer should be at least `ULID_LEN` long.
+/// Encode a u128 value to a given buffer. The provided buffer should be at least `ULYS_LEN` long.
 #[deprecated(
     since = "1.2.0",
     note = "Use the infallible `encode_to_array` instead."
@@ -64,35 +64,35 @@ impl fmt::Display for EncodeError {
 pub fn encode_to(mut value: u128, buffer: &mut [u8]) -> Result<usize, EncodeError> {
     // NOTE: This function can't be made const because mut refs aren't allowed for some reason
 
-    if buffer.len() < ULID_LEN {
+    if buffer.len() < ULYS_LEN {
         return Err(EncodeError::BufferTooSmall);
     }
 
-    for i in 0..ULID_LEN {
-        buffer[ULID_LEN - 1 - i] = ALPHABET[(value & 0x1f) as usize];
+    for i in 0..ULYS_LEN {
+        buffer[ULYS_LEN - 1 - i] = ALPHABET[(value & 0x1f) as usize];
         value >>= 5;
     }
 
-    Ok(ULID_LEN)
+    Ok(ULYS_LEN)
 }
 
 /// Encode a u128 value to a given buffer.
-pub fn encode_to_array(mut value: u128, buffer: &mut [u8; ULID_LEN]) {
+pub fn encode_to_array(mut value: u128, buffer: &mut [u8; ULYS_LEN]) {
     // NOTE: This function can't be made const because mut refs aren't allowed for some reason
 
-    for i in 0..ULID_LEN {
-        buffer[ULID_LEN - 1 - i] = ALPHABET[(value & 0x1f) as usize];
+    for i in 0..ULYS_LEN {
+        buffer[ULYS_LEN - 1 - i] = ALPHABET[(value & 0x1f) as usize];
         value >>= 5;
     }
 }
 
 #[cfg(feature = "std")]
 pub fn encode(value: u128) -> String {
-    let mut buffer: [u8; ULID_LEN] = [0; ULID_LEN];
+    let mut buffer: [u8; ULYS_LEN] = [0; ULYS_LEN];
 
     encode_to_array(value, &mut buffer);
 
-    String::from_utf8(buffer.to_vec()).expect("unexpected failure in base32 encode for ulid")
+    String::from_utf8(buffer.to_vec()).expect("unexpected failure in base32 encode for ulys")
 }
 
 /// An error that can occur when decoding a base32 string
@@ -118,7 +118,7 @@ impl fmt::Display for DecodeError {
 }
 
 pub const fn decode(encoded: &str) -> Result<u128, DecodeError> {
-    if encoded.len() != ULID_LEN {
+    if encoded.len() != ULYS_LEN {
         return Err(DecodeError::InvalidLength);
     }
 
@@ -128,7 +128,7 @@ pub const fn decode(encoded: &str) -> Result<u128, DecodeError> {
 
     // Manual for loop because Range::iter() isn't const
     let mut i = 0;
-    while i < ULID_LEN {
+    while i < ULYS_LEN {
         let val = LOOKUP[bytes[i] as usize];
         if val != NO_VALUE {
             value = (value << 5) | val as u128;
@@ -161,9 +161,9 @@ mod tests {
 
     #[test]
     fn test_length() {
-        assert_eq!(encode(0xffffffffffffffffffffffffffffffff).len(), ULID_LEN);
-        assert_eq!(encode(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f).len(), ULID_LEN);
-        assert_eq!(encode(0x00000000000000000000000000000000).len(), ULID_LEN);
+        assert_eq!(encode(0xffffffffffffffffffffffffffffffff).len(), ULYS_LEN);
+        assert_eq!(encode(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f).len(), ULYS_LEN);
+        assert_eq!(encode(0x00000000000000000000000000000000).len(), ULYS_LEN);
 
         assert_eq!(decode(""), Err(DecodeError::InvalidLength));
         assert_eq!(

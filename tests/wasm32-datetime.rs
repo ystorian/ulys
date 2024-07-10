@@ -1,6 +1,6 @@
 #![cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 
-use ulid::Ulid;
+use ulys::Ulys;
 
 use wasm_bindgen_test::*;
 use web_time::web::SystemTimeExt;
@@ -13,14 +13,14 @@ fn now() -> std::time::SystemTime {
 
 #[wasm_bindgen_test]
 fn test_dynamic() {
-    let ulid = Ulid::new();
-    let encoded = ulid.to_string();
-    let ulid2 = Ulid::from_string(&encoded).expect("failed to deserialize");
+    let ulys = Ulys::new();
+    let encoded = ulys.to_string();
+    let ulys2 = Ulys::from_string(&encoded).expect("failed to deserialize");
 
     println!("{}", encoded);
-    println!("{:?}", ulid);
-    println!("{:?}", ulid2);
-    assert_eq!(ulid, ulid2);
+    println!("{:?}", ulys);
+    println!("{:?}", ulys2);
+    assert_eq!(ulys, ulys2);
 }
 
 #[wasm_bindgen_test]
@@ -28,10 +28,10 @@ fn test_source() {
     use rand::rngs::mock::StepRng;
     let mut source = StepRng::new(123, 0);
 
-    let u1 = Ulid::with_source(&mut source);
+    let u1 = Ulys::with_source(&mut source);
     let dt = now() + Duration::from_millis(1);
-    let u2 = Ulid::from_datetime_with_source(dt, &mut source);
-    let u3 = Ulid::from_datetime_with_source(dt, &mut source);
+    let u2 = Ulys::from_datetime_with_source(dt, &mut source);
+    let u3 = Ulys::from_datetime_with_source(dt, &mut source);
 
     assert!(u1 < u2);
     assert_eq!(u2, u3);
@@ -40,39 +40,39 @@ fn test_source() {
 #[wasm_bindgen_test]
 fn test_order() {
     let dt = now();
-    let ulid1 = Ulid::from_datetime(dt);
-    let ulid2 = Ulid::from_datetime(dt + Duration::from_millis(1));
-    assert!(ulid1 < ulid2);
+    let ulys1 = Ulys::from_datetime(dt);
+    let ulys2 = Ulys::from_datetime(dt + Duration::from_millis(1));
+    assert!(ulys1 < ulys2);
 }
 
 #[wasm_bindgen_test]
 fn test_datetime() {
     let dt = now();
-    let ulid = Ulid::from_datetime(dt);
+    let ulys = Ulys::from_datetime(dt);
 
-    println!("{:?}, {:?}", dt, ulid.datetime());
-    assert!(ulid.datetime() <= dt);
-    assert!(ulid.datetime() + Duration::from_millis(1) >= dt);
+    println!("{:?}, {:?}", dt, ulys.datetime());
+    assert!(ulys.datetime() <= dt);
+    assert!(ulys.datetime() + Duration::from_millis(1) >= dt);
 }
 
 #[wasm_bindgen_test]
 fn test_timestamp() {
     let dt = now();
-    let ulid = Ulid::from_datetime(dt);
+    let ulys = Ulys::from_datetime(dt);
     let ts = dt
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_millis();
 
-    assert_eq!(u128::from(ulid.timestamp_ms()), ts);
+    assert_eq!(u128::from(ulys.timestamp_ms()), ts);
 }
 
 #[wasm_bindgen_test]
 fn default_is_nil() {
-    assert_eq!(Ulid::default(), Ulid::nil());
+    assert_eq!(Ulys::default(), Ulys::nil());
 }
 
 #[wasm_bindgen_test]
 fn nil_is_at_unix_epoch() {
-    assert_eq!(Ulid::nil().datetime(), SystemTime::UNIX_EPOCH);
+    assert_eq!(Ulys::nil().datetime(), SystemTime::UNIX_EPOCH);
 }
