@@ -10,6 +10,11 @@ use crate::Ulys;
 use base32::Alphabet;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+/// Serializes a ULYS as a base32 string.
+///
+/// # Errors
+///
+/// This function will return an error if the ULYS cannot be serialized as a base32 string.
 impl Serialize for Ulys {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -21,6 +26,11 @@ impl Serialize for Ulys {
     }
 }
 
+/// Deserializes a ULYS from a base32 string.
+///
+/// # Errors
+///
+/// This function will return an error if the ULYS is not a valid base32 string.
 impl<'de> Deserialize<'de> for Ulys {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -54,6 +64,10 @@ pub mod ulys_as_u128 {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     /// Serializes a ULYS as a u128 type.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the ULYS cannot be serialized as a u128 value.
     pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -62,6 +76,10 @@ pub mod ulys_as_u128 {
     }
 
     /// Deserializes a ULYS from a u128 type.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the ULYS is not a valid u128 value.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
     where
         D: Deserializer<'de>,
@@ -95,6 +113,10 @@ pub mod ulys_as_uuid {
     use uuid::Uuid;
 
     /// Converts the ULYS to a UUID and serializes it as a string.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the ULYS cannot be serialized as a UUID string.
     pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -104,6 +126,10 @@ pub mod ulys_as_uuid {
     }
 
     /// Deserializes a ULYS from a string containing a UUID.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the ULYS is not a valid UUID string.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
     where
         D: Deserializer<'de>,

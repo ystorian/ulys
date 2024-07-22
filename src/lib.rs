@@ -44,6 +44,7 @@ impl Ulys {
     pub const CHECK_BITS: u8 = 32;
 
     /// Creates a new Ulys with the current time (UTC)
+    #[must_use]
     pub fn new() -> Self {
         Self::from_datetime(SystemTime::now())
     }
@@ -68,12 +69,14 @@ impl Ulys {
     }
 
     /// Gets the datetime of when this Ulys was created accurate to 1ms
+    #[must_use]
     pub fn datetime(&self) -> SystemTime {
         let stamp = self.timestamp_ms();
         SystemTime::UNIX_EPOCH + Duration::from_millis(stamp)
     }
 
     /// Checks if the Ulys is valid
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         let data = (self.0 >> Self::CHECK_BITS) << Self::CHECK_BITS;
         let checksum = Ulys::checksum(data);
@@ -82,6 +85,7 @@ impl Ulys {
     }
 
     /// Test if the Ulys is nil
+    #[must_use]
     pub fn is_default(&self) -> bool {
         self.0 == 0u128
     }
