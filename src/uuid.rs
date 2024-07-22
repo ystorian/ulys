@@ -30,8 +30,8 @@ mod test {
 
     #[test]
     fn uuid_str_cycle() {
-        let uuid_txt = "771a3bce-02e9-4428-a68e-b1e7e82b7f9f";
-        let ulys_txt = "3q38xww0q98gmad3nhwzm2pzwz";
+        let uuid_txt = "881a3bfe-01e9-4438-a68e-b1e7e82b7f9c";
+        let ulys_txt = "h0d3qzg1x523h9mep7kygavzkg";
 
         let ulys: Ulys = Uuid::parse_str(uuid_txt).unwrap().into();
         assert_eq!(ulys.to_string(), ulys_txt);

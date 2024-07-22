@@ -6,7 +6,8 @@
 //! ULYSes can optionally be serialized as u128 integers using the `ulys_as_u128`
 //! module. See the module's documentation for examples.
 
-use crate::{Ulys, ULYS_LEN};
+use crate::Ulys;
+use base32::Alphabet;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 impl Serialize for Ulys {
@@ -14,9 +15,9 @@ impl Serialize for Ulys {
     where
         S: Serializer,
     {
-        let mut buffer = [0; ULYS_LEN];
-        let text = self.array_to_str(&mut buffer);
-        text.serialize(serializer)
+        base32::encode(Alphabet::Crockford, &self.0.to_be_bytes())
+            .to_lowercase()
+            .serialize(serializer)
     }
 }
 
@@ -88,7 +89,6 @@ pub mod ulys_as_u128 {
 ///     identifier: Ulys
 /// }
 /// ```
-#[cfg(all(feature = "uuid", feature = "serde"))]
 pub mod ulys_as_uuid {
     use crate::Ulys;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
