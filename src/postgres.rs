@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn postgres_cycle() {
-        let ulys = Ulys::from_string("3q38xww0q98gmad3nhwzm2pzwz").unwrap();
+        let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").unwrap();
 
         let mut w = bytes::BytesMut::new();
         let t = &Type::UUID;
