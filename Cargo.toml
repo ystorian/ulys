@@ -8,6 +8,7 @@ readme = "README.md"
 description = "a Universally Unique Lexicographically Sortable Identifier implementation, with a checksum"
 keywords = ["ulys", "ulid", "uuid", "sortable", "identifier"]
 repository = "https://github.com/ystorian/ulys"
+exclude = [".github/*", "deny.toml"]
 
 [dependencies]
 base32 = "0.5"
