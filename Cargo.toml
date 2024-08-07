@@ -1,6 +1,6 @@
 [package]
 name = "ulys"
-version = "0.1.0"
+version = "31.0.0"
 edition = "2021"
 authors = ["dylanhart <dylan96hart@gmail.com>", "adriantombu <adrian@ystorian.com>"]
 license = "MIT"
@@ -9,6 +9,12 @@ description = "a Universally Unique Lexicographically Sortable Identifier implem
 keywords = ["ulys", "ulid", "uuid", "sortable", "identifier"]
 repository = "https://github.com/ystorian/ulys"
 exclude = [".github/*", "deny.toml"]
+
+[features]
+default = []
+postgres = ["dep:bytes", "dep:postgres-types"]
+serde = ["dep:serde", "dep:serde_derive", "dep:uuid"]
+uuid = ["dep:uuid"]
 
 [dependencies]
 base32 = "0.5"
