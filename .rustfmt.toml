@@ -1,0 +1,4 @@
+# Format: https://rust-lang.github.io/rustfmt
+
+# This file must be at the root of the project to force rustfmt to use tabs.
+hard_tabs = true
