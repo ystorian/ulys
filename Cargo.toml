@@ -8,7 +8,15 @@ readme = "README.md"
 description = "a Universally Unique Lexicographically Sortable Identifier implementation, with a checksum"
 keywords = ["ulys", "ulid", "uuid", "sortable", "identifier"]
 repository = "https://github.com/ystorian/ulys"
-exclude = [".github/*", "deny.toml"]
+exclude = [
+	".github/*",
+	".just/*",
+	".vscode/*",
+	".editorconfig",
+	".markdownlint.json",
+	"deny.toml",
+	"justfile",
+]
 
 [features]
 default = []
