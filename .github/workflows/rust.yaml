@@ -1,0 +1,134 @@
+# .github/workflows/rust.yaml
+name: Rust
+
+on:
+  schedule:
+    - cron: 0 7 * * 1 # Runs at 07:00 UTC every Monday
+  workflow_dispatch: # Allows manual triggering
+  push:
+    branches-ignore: [ pre-release ]
+
+env:
+  # Always display colored outputs.
+  CARGO_TERM_COLOR: always
+
+  # Set quiet mode by default.
+  CARGO_TERM_QUIET: true
+
+  # Disable incremental compilation for faster from-scratch builds.
+  CARGO_INCREMENTAL: 0
+
+  # Disable debug info to reduce the size of `./target`
+  CARGO_PROFILE_TEST_DEBUG: 0
+
+  # Set a rust version string for the rustup-cache.
+  # Changing this will refresh the cache.
+  RUST_VERSION: "1.95"
+
+jobs:
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        # 2026-01-09: v6.0.2
+        with:
+          # Skip post-cleanup.
+          persist-credentials: false
+
+      - name: Check dependencies, licenses, and audit vulnerabilities
+        uses: EmbarkStudios/cargo-deny-action@91bf2b620e09e18d6eb78b92e7861937469acedb
+        # 2026-04-14: v2.0.17
+        with:
+          log-level: error
+          command: check
+          arguments: --all-features --workspace
+
+
+  check:
+    name: ${{matrix.name}}
+    runs-on: ${{matrix.os}}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Linux
+          - os: windows-latest
+            name: Windows
+          - os: macos-latest
+            name: macOS
+
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        # 2026-01-09: v6.0.2
+        with:
+          # Skip post-cleanup.
+          persist-credentials: false
+
+      - name: Show the Rust toolchains
+        run: rustup -V && rustup show --verbose
+
+      - name: Cache the Rust toolchain
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+        # 2026-04-13: v5.0.5
+        id: rustup-cache
+        with:
+          path: ~/.rustup
+          key: rustup-${{runner.os}}-${{env.RUST_VERSION}}
+
+      - name: Remove unneeded Rust targets on Windows
+        # This will prevent `rustup update` to download unneeded targets.
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          rustup target remove x86_64-pc-windows-gnu || true
+          rustup target remove i686-pc-windows-msvc || true
+
+      - name: Update the Rust toolchain
+        # Only when the cache was not found.
+        if: steps.rustup-cache.outputs.cache-hit != 'true'
+        run: rustup update --no-self-update ${{env.RUST_VERSION}}
+
+      - name: Set the default Rust toolchain
+        run: rustup default ${{env.RUST_VERSION}}
+
+      - name: Add Rust components
+        # Only when the cache was not found.
+        if: steps.rustup-cache.outputs.cache-hit != 'true'
+        run: rustup component add rustfmt clippy
+
+      - name: Show the Rust toolchains
+        run: rustup -V && rustup show --verbose
+
+      - name: Cache Cargo crates
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+        # 2026-04-13: v5.0.5
+        id: cargo-cache
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            target/
+          key: cargo-${{runner.os}}-${{ hashFiles('**/Cargo.lock') }}
+          # Use a previous cache image when Cargo.lock was updated, but only on non-main branches.
+          # This is to prevent the cached image to grow over time.
+          # A fresh cache image is created when this action runs on the main branch.
+          restore-keys: ${{ github.ref != 'refs/heads/main' && format('cargo-{0}-', runner.os) || '' }}
+
+      - name: Download all dependencies
+        if: steps.cargo-cache.outputs.cache-hit != 'true'
+        run: cargo fetch --locked
+
+      - name: Validate rust formatting
+        run: cargo fmt --all --check
+
+      # All the next cargo commands are with `--frozen` (--locked and --offline)
+
+      - name: Test
+        run: cargo test --frozen --profile ci --all-features --workspace
+
+      - name: Check and lint with Clippy
+        run: cargo clippy --frozen --profile ci --all-features --workspace --tests -- -D warnings

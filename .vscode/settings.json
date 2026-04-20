@@ -1,0 +1,25 @@
+// .vscode/settings.json
+{
+	// streetsidesoftware.code-spell-checker
+	// Ignore generated files.
+	"cSpell.ignorePaths": [
+		"Cargo.lock",
+		"**/target/**"
+	],
+	// Ignore code blocks (```...```).
+	"cSpell.ignoreRegExpList": [
+		"/^\\s*```(.|\\n)+?^\\s*```/gm"
+	],
+	"cSpell.language": "en",
+	"cSpell.words": [
+		"adriantombu",
+		"clippy",
+		"cyann",
+		"msrv",
+		"msvc",
+		"serde",
+		"ulys",
+		"vcvarsall",
+		"xxhash"
+	],
+}
