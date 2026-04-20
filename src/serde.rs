@@ -16,14 +16,14 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 ///
 /// This function will return an error if the ULYS cannot be serialized as a base32 string.
 impl Serialize for Ulys {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        base32::encode(Alphabet::Crockford, &self.0.to_be_bytes())
-            .to_lowercase()
-            .serialize(serializer)
-    }
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		base32::encode(Alphabet::Crockford, &self.0.to_be_bytes())
+			.to_lowercase()
+			.serialize(serializer)
+	}
 }
 
 /// Deserializes a ULYS from a base32 string.
@@ -32,13 +32,13 @@ impl Serialize for Ulys {
 ///
 /// This function will return an error if the ULYS is not a valid base32 string.
 impl<'de> Deserialize<'de> for Ulys {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let deserialized_str = String::deserialize(deserializer)?;
-        Self::from_string(&deserialized_str).map_err(serde::de::Error::custom)
-    }
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let deserialized_str = String::deserialize(deserializer)?;
+		Self::from_string(&deserialized_str).map_err(serde::de::Error::custom)
+	}
 }
 
 /// Serialization and deserialization of ULYSes through their inner u128 type.
@@ -60,33 +60,33 @@ impl<'de> Deserialize<'de> for Ulys {
 /// }
 /// ```
 pub mod ulys_as_u128 {
-    use crate::Ulys;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+	use crate::Ulys;
+	use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    /// Serializes a ULYS as a u128 type.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the ULYS cannot be serialized as a u128 value.
-    pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        value.0.serialize(serializer)
-    }
+	/// Serializes a ULYS as a u128 type.
+	///
+	/// # Errors
+	///
+	/// This function will return an error if the ULYS cannot be serialized as a u128 value.
+	pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		value.0.serialize(serializer)
+	}
 
-    /// Deserializes a ULYS from a u128 type.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the ULYS is not a valid u128 value.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let deserialized_u128 = u128::deserialize(deserializer)?;
-        Ok(Ulys(deserialized_u128))
-    }
+	/// Deserializes a ULYS from a u128 type.
+	///
+	/// # Errors
+	///
+	/// This function will return an error if the ULYS is not a valid u128 value.
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let deserialized_u128 = u128::deserialize(deserializer)?;
+		Ok(Ulys(deserialized_u128))
+	}
 }
 
 /// Serialization and deserialization of ULYSes through UUID strings.
@@ -108,34 +108,34 @@ pub mod ulys_as_u128 {
 /// }
 /// ```
 pub mod ulys_as_uuid {
-    use crate::Ulys;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-    use uuid::Uuid;
+	use crate::Ulys;
+	use serde::{Deserialize, Deserializer, Serialize, Serializer};
+	use uuid::Uuid;
 
-    /// Converts the ULYS to a UUID and serializes it as a string.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the ULYS cannot be serialized as a UUID string.
-    pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let uuid: Uuid = (*value).into();
-        uuid.to_string().serialize(serializer)
-    }
+	/// Converts the ULYS to a UUID and serializes it as a string.
+	///
+	/// # Errors
+	///
+	/// This function will return an error if the ULYS cannot be serialized as a UUID string.
+	pub fn serialize<S>(value: &Ulys, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		let uuid: Uuid = (*value).into();
+		uuid.to_string().serialize(serializer)
+	}
 
-    /// Deserializes a ULYS from a string containing a UUID.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the ULYS is not a valid UUID string.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let de_string = String::deserialize(deserializer)?;
-        let de_uuid = Uuid::parse_str(&de_string).map_err(serde::de::Error::custom)?;
-        Ok(Ulys::from(de_uuid))
-    }
+	/// Deserializes a ULYS from a string containing a UUID.
+	///
+	/// # Errors
+	///
+	/// This function will return an error if the ULYS is not a valid UUID string.
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Ulys, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let de_string = String::deserialize(deserializer)?;
+		let de_uuid = Uuid::parse_str(&de_string).map_err(serde::de::Error::custom)?;
+		Ok(Ulys::from(de_uuid))
+	}
 }
