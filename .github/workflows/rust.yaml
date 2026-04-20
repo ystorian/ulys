@@ -132,6 +132,3 @@ jobs:
 
       - name: Check and lint with Clippy
         run: cargo clippy --frozen --profile ci --all-features --workspace --tests -- -D warnings
-
-      - name: Run ally debug
-        run: cargo run --frozen --profile ci --bin ally -- debug
