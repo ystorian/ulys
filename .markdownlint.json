@@ -1,6 +1,5 @@
 // .markdownlint.json
-// Last refresh: 2026-04-05
-// https://github.com/DavidAnson/markdownlint/
+// Last refresh: 2026-05-18
 {
 	"default": true,
 	// Headings must use ATX style: line with 1 to 6 hashes `#` followed by 1 space.
@@ -25,8 +24,8 @@
 	},
 	// Allow unlimited line length, leverage auto-wrap instead.
 	"MD013": false,
+	// Allow any number of blank lines above and below headings.
 	"MD022": {
-		// Allow any number of blank lines above and below headings.
 		"lines_above": -1,
 		"lines_below": -1
 	},
@@ -41,11 +40,8 @@
 			"button"
 		]
 	},
-	// Disable the trigger on first line that should be a top-level heading.
-	"MD041": {
-		"level": 2,
-		"allow_preamble": true
-	},
+	// Disable heading requirements.
+	"MD041": false,
 	// Do not require alt-text for images.
 	"MD045": false,
 	// Use undercores for _emphasis_ (italic).

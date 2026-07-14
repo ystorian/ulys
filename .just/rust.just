@@ -1,91 +1,84 @@
 # .just/rust.just
 
-# Benchmark
-[group('Rust')]
-[unix]
-bench:
-	echo 🦀 {{CYAN}}cargo bench{{NORMAL}}
-	cargo bench --all-features
 
 # Benchmark
 [group('Rust')]
-[windows]
 bench:
-	echo 🦀 {{CYAN}}cargo bench{{NORMAL}}
-	call scripts/vcvarsall.cmd {{arch}}_{{arch}} && \
-	cargo bench --all-features
+	echo {{CYAN}}cargo bench{{NORMAL}}
+	cargo bench --all-features --workspace
+	echo {{done('')}}
 
 
 # Check for errors
-[group('rust')]
+[group('Rust')]
 check:
-	echo 🦀 {{CYAN}}cargo check{{NORMAL}}
-	cargo check --all-features
+	echo {{CYAN}}cargo check{{NORMAL}}
+	cargo check --workspace --all-features
+	echo {{done('')}}
 
 
 # Check dependencies and licenses
-[group('rust')]
+[group('Rust')]
 deny:
-	echo 🦀 {{CYAN}}cargo-deny{{NORMAL}}
-	cargo-deny --all-features --log-level error check
+	echo {{CYAN}}cargo-deny{{NORMAL}}
+	cargo-deny --all-features --workspace --log-level error check
+	echo {{done('')}}
 
 
 # Format Rust code
-[group('rust')]
-fmt:
-	echo 🦀 {{CYAN}} cargo fmt{{NORMAL}}
+[group('Rust')]
+format:
+	echo {{CYAN}}cargo fmt{{NORMAL}}
 	cargo fmt --all
+	echo {{done('')}}
+alias fmt := format
 
 
 # Clippy
-[group('rust')]
-lint:
-	echo 🦀 {{CYAN}}cargo clippy {{YELLOW + ITALIC}}pedantic{{NORMAL}}
+[group('Rust')]
+clippy:
+	echo {{CYAN}}cargo clippy {{YELLOW + ITALIC}}pedantic{{NORMAL}}
 	cargo clippy --all-targets --all-features --all -- --deny clippy::all --warn clippy::pedantic
-alias clippy := lint
+	echo {{done('')}}
+alias lint := clippy
 
 
-# Clippy limited to the specified lint
-[group('rust')]
-lintonly clippy_lint:
-	cargo clippy --all-targets --all-features --all -- --warn clippy::{{clippy_lint}}
+# Run Clippy limited to the specified lint
+[group('Rust')]
+clippy_lint lint:
+	cargo clippy --all-targets --all-features --all -- --warn clippy::{{lint}}
+	echo {{done(lint)}}
 
 
 # Fix easy Clippy lints (requires no uncommitted changes)
-[group('rust')]
-fix_clippy:
-	echo 🦀 {{CYAN}}Fixing easy Clippy lints...{{NORMAL}}
+[group('Rust')]
+clippy_fix:
+	echo {{CYAN}}Fix easy Clippy lints{{NORMAL}}
 	echo ⚠️ {{YELLOW}}Commit all your changes first{{NORMAL}}
 	cargo clippy --fix
+	echo {{done('')}}
 
 
-# Run unit and integration tests with nextest
-[group('rust')]
+# Run unit and integration tests
+[group('Rust')]
 test:
-	cargo test --all-features
+	cargo test --all-features --workspace
+	echo {{done('')}}
 
 
-# Run the CI tests like the GitHub action in `rust.yaml`
-[group('rust')]
-[env("CARGO_TERM_QUIET", "true")]
-[env("CARGO_INCREMENTAL", "0")]
-[env("CARGO_PROFILE_TEST_DEBUG", "0")]
-test_ci:
-	echo 🦀 {{CYAN}}cargo-deny{{NORMAL}}
+# Clean the workspace
+[group('Rust')]
+clean_workspace:
+	echo {{CYAN}}Clean the workspace{{NORMAL}}
+	cargo-clean-all --yes .
+	cargo check --all-features
 	cargo-deny --all-features --log-level error check
-	echo 🦀 {{CYAN}}cargo fmt{{NORMAL}}
-	cargo fmt --all --check
-	echo 🦀 {{CYAN}}cargo test{{NORMAL}}
-	cargo test --frozen --profile ci --all-features
-	echo 🦀 {{CYAN}}cargo clippy{{NORMAL}}
-	cargo clippy --frozen --profile ci --all-features --tests -- -D warnings
-	echo ✅ {{GREEN}}test_ci{{NORMAL}}
+	echo {{done('')}}
 
 
-# Update dependencies
-[group('setup')]
-update_deps:
-	echo ⚙️ {{CYAN}} Updating dependencies in {{GREEN}}Cargo.toml{{NORMAL}}
-	cargo update --verbose
-	just deny
-	echo ✅ {{GREEN}}Done{{NORMAL}}
+# Build in release mode and install locally
+[group('Rust')]
+install:
+	echo {{CYAN}}cargo install{{NORMAL}}
+	cargo install --path .
+	echo {{done('')}}
