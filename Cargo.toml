@@ -1,6 +1,6 @@
 [package]
 name = "ulys"
-version = "31.0.1"
+version = "31.0.2"
 edition = "2021"
 authors = [
 	"dylanhart <dylan96hart@gmail.com>",
@@ -30,12 +30,12 @@ uuid = ["dep:uuid"]
 
 [dependencies]
 base32 = "0.5"
-bytes = { version = "1.0", optional = true }
+bytes = { version = "1.12", optional = true }
 postgres-types = { version = "0.2", optional = true }
 rand = "0.10"
 serde = { version = "1.0", optional = true }
 serde_derive = { version = "1.0", optional = true }
-uuid = { version = "1.10", optional = true }
+uuid = { version = "1.23", optional = true }
 xxhash-rust = { version = "0.8", features = ["xxh3", "const_xxh3"] }
 
 [profile.dev]
