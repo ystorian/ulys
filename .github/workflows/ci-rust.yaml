@@ -1,19 +1,22 @@
-# .github/workflows/rust.yaml
-name: Rust
+# .github/workflows/ci-rust.yaml
+name: CI
 
 on:
   schedule:
-    - cron: 0 7 * * 1 # Runs at 07:00 UTC every Monday
+    # Runs at 08:00 UTC every Monday.
+    - cron: 0 8 * * 1
   workflow_dispatch: # Allows manual triggering
   push:
-    branches-ignore: [ pre-release ]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'schedule' }}
 
 env:
   # Always display colored outputs.
   CARGO_TERM_COLOR: always
-
-  # Set quiet mode by default.
-  CARGO_TERM_QUIET: true
 
   # Disable incremental compilation for faster from-scratch builds.
   CARGO_INCREMENTAL: 0
@@ -23,32 +26,44 @@ env:
 
   # Set a rust version string for the rustup-cache.
   # Changing this will refresh the cache.
-  RUST_VERSION: "1.95"
+  RUST_VERSION: "1.96"
 
 jobs:
-  audit:
-    name: Audit
+  check:
+    name: Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout the source
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        # 2026-01-09: v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Skip post-cleanup.
           persist-credentials: false
 
+      - name: Validate Rust formatting
+        # Fail fast with the default version of `rustfmt` installed in the runner.
+        run: |
+          cargo fmt --version
+          cargo fmt --all --check
+
       - name: Check dependencies, licenses, and audit vulnerabilities
-        uses: EmbarkStudios/cargo-deny-action@91bf2b620e09e18d6eb78b92e7861937469acedb
-        # 2026-04-14: v2.0.17
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:
           log-level: error
           command: check
           arguments: --all-features --workspace
 
 
-  check:
+  test:
     name: ${{matrix.name}}
     runs-on: ${{matrix.os}}
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
 
     strategy:
       matrix:
@@ -62,18 +77,23 @@ jobs:
 
     steps:
       - name: Checkout the source
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        # 2026-01-09: v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Skip post-cleanup.
           persist-credentials: false
+
+      - name: Configure variables
+        # Set quiet mode by default, except on debug runs.
+        run: |
+          if [ "$ACTIONS_STEP_DEBUG" != "true" ]; then
+            echo "CARGO_TERM_QUIET=true" >> $GITHUB_ENV
+          fi
 
       - name: Show the Rust toolchains
         run: rustup -V && rustup show --verbose
 
       - name: Cache the Rust toolchain
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
-        # 2026-04-13: v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: rustup-cache
         with:
           path: ~/.rustup
@@ -82,7 +102,6 @@ jobs:
       - name: Remove unneeded Rust targets on Windows
         # This will prevent `rustup update` to download unneeded targets.
         if: matrix.os == 'windows-latest'
-        shell: bash
         run: |
           rustup target remove x86_64-pc-windows-gnu || true
           rustup target remove i686-pc-windows-msvc || true
@@ -90,10 +109,10 @@ jobs:
       - name: Update the Rust toolchain
         # Only when the cache was not found.
         if: steps.rustup-cache.outputs.cache-hit != 'true'
-        run: rustup update --no-self-update ${{env.RUST_VERSION}}
+        run: rustup update --no-self-update ${RUST_VERSION}
 
       - name: Set the default Rust toolchain
-        run: rustup default ${{env.RUST_VERSION}}
+        run: rustup default ${RUST_VERSION}
 
       - name: Add Rust components
         # Only when the cache was not found.
@@ -104,8 +123,7 @@ jobs:
         run: rustup -V && rustup show --verbose
 
       - name: Cache Cargo crates
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
-        # 2026-04-13: v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: cargo-cache
         with:
           path: |
