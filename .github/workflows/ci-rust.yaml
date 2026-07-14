@@ -1,5 +1,5 @@
-# .github/workflows/rust.yaml
-name: Rust
+# .github/workflows/ci-rust.yaml
+name: CI
 
 on:
   schedule:
@@ -31,15 +31,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the source
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        # 2026-01-09: v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Skip post-cleanup.
           persist-credentials: false
 
       - name: Check dependencies, licenses, and audit vulnerabilities
-        uses: EmbarkStudios/cargo-deny-action@91bf2b620e09e18d6eb78b92e7861937469acedb
-        # 2026-04-14: v2.0.17
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:
           log-level: error
           command: check
@@ -62,8 +60,7 @@ jobs:
 
     steps:
       - name: Checkout the source
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        # 2026-01-09: v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Skip post-cleanup.
           persist-credentials: false
@@ -72,8 +69,7 @@ jobs:
         run: rustup -V && rustup show --verbose
 
       - name: Cache the Rust toolchain
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
-        # 2026-04-13: v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: rustup-cache
         with:
           path: ~/.rustup
@@ -104,8 +100,7 @@ jobs:
         run: rustup -V && rustup show --verbose
 
       - name: Cache Cargo crates
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
-        # 2026-04-13: v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: cargo-cache
         with:
           path: |
