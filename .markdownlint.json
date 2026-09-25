@@ -45,7 +45,7 @@
 	"MD041": false,
 	// Do not require alt-text for images.
 	"MD045": false,
-	// Use undercores for _emphasis_ (italic).
+	// Use underscores for _emphasis_ (italic).
 	"MD049": {
 		"style": "underscore"
 	},
