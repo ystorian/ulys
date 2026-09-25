@@ -157,7 +157,8 @@ jobs:
         run: rustup target add "$TARGET"
 
       - name: Build
-        run: cargo build --locked --release --target "$TARGET"
+        # The `ulys` binary requires the `cli` feature.
+        run: cargo build --locked --release --target "$TARGET" --features cli
 
       - name: Read the package name and version from Cargo.toml
         id: stem
