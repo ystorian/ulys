@@ -1,0 +1,49 @@
+# .github/filters.yaml
+
+# Shared path filters for `dorny/paths-filter` in the `changes` job.
+#
+# The filter is set  with `predicate-quantifier = every`:
+# - This is an AND semantics.
+# - It's not possible to re-include a file with a positive pattern.
+
+
+# Common exclusions, changes in these files are ignored in all actions.
+_common: &common
+  # Must begin with `**`.
+  - "**"
+  # Markdown.
+  - "!**/*.md"
+  # Licenses.
+  - "!LICENSE*"
+  # Just recipes.
+  - "!justfile"
+  - "!.just/**"
+  # Rust.
+  - "!.clippy.toml"
+  - "!.rustfmt.toml"
+  # Local dev.
+  - "!compose.Dockerfile"
+  - "!compose.yaml"
+  - "!droast.toml"
+  - "!.editorconfig"
+  - "!.env*"
+  - "!.githooks/**"
+  - "!.markdownlint.json"
+  # This file.
+  - "!.github/filters.yaml"
+
+
+# CI: Ignore files only used in release.
+ci:
+  - *common
+  - "!*Dockerfile*"
+  - "!.dockerignore"
+  - "!.github/workflows/release*.yaml"
+
+
+# Release: Ignore files only used in CI.
+release:
+  - *common
+  - "!deny.toml"
+  - "!.gitignore"
+  - "!.github/workflows/ci**.yaml"
