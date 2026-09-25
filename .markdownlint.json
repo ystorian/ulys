@@ -1,5 +1,4 @@
-// .markdownlint.json
-// Last refresh: 2026-05-18
+// @template/.markdownlint.json
 {
 	"default": true,
 	// Headings must use ATX style: line with 1 to 6 hashes `#` followed by 1 space.
@@ -10,10 +9,8 @@
 	"MD004": {
 		"style": "dash"
 	},
-	// Unordered list indentation, default is 2, set to 1 to allow tabs.
-	"MD007": {
-		"indent": 1
-	},
+	// Unordered list indentation, default is 2, set to false to allow tabs.
+	"MD007": false,
 	// Allow tabs in code blocks.
 	"MD010": {
 		"code_blocks": false
@@ -31,6 +28,8 @@
 	},
 	// Allow multiple blockquotes separated by a blank line.
 	"MD028": false,
+	// Allow compact lists.
+	"MD032": false,
 	// Allow some inline HTML tags.
 	"MD033": {
 		"allowed_elements": [
@@ -40,6 +39,8 @@
 			"button"
 		]
 	},
+	// Allow emphasis (bold) text as sub-heading.
+	"MD036": false,
 	// Disable heading requirements.
 	"MD041": false,
 	// Do not require alt-text for images.

@@ -1,5 +1,4 @@
-# .gitignore
-# Last refresh: 2026-05-18
+# @template/.gitignore
 
 # macOS:
 # Finder thumbnail files and icons.
@@ -31,5 +30,7 @@ logs/
 vendor/
 # JS/TS Node modules:
 node_modules/
-
-# Additional files and directories for this repository:
+# Just cache for cached scripts.
+.justcache/
+# Local tests.
+tests/
