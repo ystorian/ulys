@@ -29,6 +29,8 @@ impl fmt::Display for UlysError {
 	}
 }
 
+impl std::error::Error for UlysError {}
+
 #[derive(Debug, Default, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Ulys(pub u128);
 
@@ -38,10 +40,30 @@ impl Ulys {
 
 	/// The number of bits in a Ulys time portion
 	pub const TIME_BITS: u8 = 48;
-	/// The number of bits in a Ulys random portion
+	/// The number of bits in a Ulys random portion, including the `UUIDv8` version and variant bits
 	pub const RAND_BITS: u8 = 48;
 	/// The number of bits in a Ulys checksum
 	pub const CHECK_BITS: u8 = 32;
+
+	/// First valid time, 2020-01-01 00:00:00 UTC, in milliseconds since the Unix epoch
+	pub const MIN_TIME_MS: u64 = 1_577_836_800_000;
+	/// First time after the valid range, 2101-01-01 00:00:00 UTC, in milliseconds since the Unix epoch
+	pub const MAX_TIME_MS: u64 = 4_133_980_800_000;
+
+	/// Mask of the timestamp value, before the shift.
+	const TIME_MASK: u128 = (1 << Self::TIME_BITS) - 1;
+	/// Mask of the random portion.
+	const RAND_MASK: u128 = ((1 << Self::RAND_BITS) - 1) << Self::CHECK_BITS;
+	/// Mask of the checksum portion.
+	const CHECK_MASK: u128 = (1 << Self::CHECK_BITS) - 1;
+	/// Mask of the UUID version field (bits 48 to 51).
+	const VERSION_MASK: u128 = 0xF << 76;
+	/// UUID version 8.
+	const VERSION_8: u128 = 0x8 << 76;
+	/// Mask of the UUID variant field (bits 64 and 65).
+	const VARIANT_MASK: u128 = 0b11 << 62;
+	/// UUID variant of RFC 9562.
+	const VARIANT_RFC9562: u128 = 0b10 << 62;
 
 	/// Creates a new Ulys with the current time (UTC)
 	#[must_use]
@@ -75,13 +97,23 @@ impl Ulys {
 		SystemTime::UNIX_EPOCH + Duration::from_millis(stamp)
 	}
 
-	/// Checks if the Ulys is valid
+	/// Checks if the checksum of the Ulys is valid
 	#[must_use]
 	pub fn is_valid(&self) -> bool {
-		let data = (self.0 >> Self::CHECK_BITS) << Self::CHECK_BITS;
-		let checksum = Ulys::checksum(data);
+		self.0 == Self::with_checksum(self.0 & !Self::CHECK_MASK)
+	}
 
-		self.0 == (data | u128::from(checksum >> Self::CHECK_BITS))
+	/// Checks if the Ulys has the `UUIDv8` version and variant bits
+	#[must_use]
+	pub fn is_uuidv8(&self) -> bool {
+		self.0 & Self::VERSION_MASK == Self::VERSION_8
+			&& self.0 & Self::VARIANT_MASK == Self::VARIANT_RFC9562
+	}
+
+	/// Checks if the time of the Ulys is from 2020 to 2100, both included
+	#[must_use]
+	pub fn is_valid_time(&self) -> bool {
+		(Self::MIN_TIME_MS..Self::MAX_TIME_MS).contains(&self.timestamp_ms())
 	}
 
 	/// Test if the Ulys is nil
@@ -95,17 +127,21 @@ impl Ulys {
 		let timestamp = datetime
 			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or(Duration::ZERO)
-			.as_millis();
+			.as_millis()
+			& Self::TIME_MASK;
 
-		let mut source = rand::rng();
-		let msb =
-			timestamp << (64 - Self::TIME_BITS) | u128::from(u64::from(source.random::<u16>()));
-		let rand = source.random::<u64>();
-		let data = msb << 64 | u128::from(rand << 32);
-		let checksum = Ulys::checksum(data);
-		let lsb = (rand << Self::CHECK_BITS) | checksum >> Self::CHECK_BITS;
+		let random = u128::from(rand::rng().random::<u64>()) << Self::CHECK_BITS & Self::RAND_MASK;
+		let random = random & !(Self::VERSION_MASK | Self::VARIANT_MASK)
+			| Self::VERSION_8
+			| Self::VARIANT_RFC9562;
+		let data = timestamp << (Self::RAND_BITS + Self::CHECK_BITS) | random;
 
-		Self(msb << 64 | u128::from(lsb))
+		Self(Self::with_checksum(data))
+	}
+
+	/// Sets the checksum bits of the given data, the checksum bits of `data` must be zero
+	fn with_checksum(data: u128) -> u128 {
+		data | u128::from(Self::checksum(data) >> Self::CHECK_BITS)
 	}
 
 	/// Creates a checksum for the given data
@@ -146,7 +182,6 @@ mod tests {
 
 	#[test]
 	fn test_from_string() {
-		// cSpell:disable-next-line
 		let text = "068cbxpc1wy9d0v9gbhrg0020r";
 		let ulys = Ulys::from_string(text);
 
@@ -214,15 +249,42 @@ mod tests {
 
 	#[test]
 	fn test_is_valid() {
-		// cSpell:disable-next-line
 		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").expect("failed to deserialize");
 
 		assert!(ulys.is_valid());
 	}
 
 	#[test]
+	fn test_new_is_valid_uuidv8() {
+		for _ in 0..1000 {
+			let ulys = Ulys::new();
+			assert!(ulys.is_valid());
+			assert!(ulys.is_uuidv8());
+		}
+	}
+
+	#[test]
+	fn test_is_valid_time() {
+		let at = |ms: u64| Ulys(u128::from(ms) << (Ulys::RAND_BITS + Ulys::CHECK_BITS));
+
+		assert!(Ulys::new().is_valid_time());
+		assert!(at(Ulys::MIN_TIME_MS).is_valid_time());
+		assert!(at(Ulys::MAX_TIME_MS - 1).is_valid_time());
+		assert!(!at(Ulys::MIN_TIME_MS - 1).is_valid_time());
+		assert!(!at(Ulys::MAX_TIME_MS).is_valid_time());
+		assert!(!Ulys::default().is_valid_time());
+	}
+
+	#[test]
+	fn test_legacy_is_not_uuidv8() {
+		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").expect("failed to deserialize");
+
+		assert!(ulys.is_valid());
+		assert!(!ulys.is_uuidv8());
+	}
+
+	#[test]
 	fn test_is_not_valid() {
-		// cSpell:disable-next-line
 		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmy0000").expect("failed to deserialize");
 
 		assert!(!ulys.is_valid());

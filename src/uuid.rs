@@ -29,9 +29,16 @@ mod test {
 	}
 
 	#[test]
+	fn uuid_version_variant() {
+		let uuid: Uuid = Ulys::new().into();
+
+		assert_eq!(uuid.get_version(), Some(uuid::Version::Custom));
+		assert_eq!(uuid.get_variant(), uuid::Variant::RFC4122);
+	}
+
+	#[test]
 	fn uuid_str_cycle() {
 		let uuid_txt = "881a3bfe-01e9-4438-a68e-b1e7e82b7f9c";
-		// cSpell:disable-next-line
 		let ulys_txt = "h0d3qzg1x523h9mep7kygavzkg";
 
 		let ulys: Ulys = Uuid::parse_str(uuid_txt).unwrap().into();

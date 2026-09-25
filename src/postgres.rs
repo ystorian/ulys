@@ -38,7 +38,6 @@ mod tests {
 
 	#[test]
 	fn postgres_cycle() {
-		// cSpell:disable-next-line
 		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").unwrap();
 
 		let mut w = bytes::BytesMut::new();

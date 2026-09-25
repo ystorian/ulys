@@ -117,11 +117,12 @@ env_list_secrets_all repo=repo:
 		--repo {{ owner + '/' + repo }}
 
 	echo {{ warning('Secrets should be restricted to environments!') }}
+
 	echo {{ done('') }}
 
 # Add an action secret to an environment
 [group('GitHub Actions')]
-env_set_secret secret env='production':
+set_env_secret secret env='production':
 	echo {{ CYAN }}Add the {{ BOLD }}action secret \
 		{{ NORMAL + YELLOW + uppercase(secret) + CYAN }} to the  {{ BOLD + env + NORMAL + CYAN }} \
 		environment in {{ GREEN + owner + '/' + repo + NORMAL }}
@@ -138,8 +139,10 @@ env_set_secret secret env='production':
 	echo {{ done('') }}
 
 # Create an environment
+[arg('env', long='env', help='Environment name')]
+[arg('repo', long='repo', value=repo, help='Repository name')]
 [group('GitHub Actions')]
-create_env repo=repo env='production':
+create_env env repo=repo:
 	echo {{ CYAN }}Create the {{ YELLOW + env + CYAN }} environment in \
 		{{ GREEN + owner + '/' + repo + NORMAL }}
 
