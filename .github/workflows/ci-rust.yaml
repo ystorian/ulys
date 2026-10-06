@@ -145,11 +145,9 @@ jobs:
 
     steps:
 
-      - name: Windows - Optimize filesystem
+      - name: Windows - Make it faster
         if: startsWith(matrix.os, 'windows')
         shell: pwsh
-        env:
-          WORKSPACE: ${{ github.workspace }}
         run: |
           fsutil behavior set disablelastaccess 1
           fsutil behavior set disable8dot3 1
@@ -159,10 +157,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # - name: Display the current Rust version and toolchains
-      #   run: rustup -V && rustup show --verbose
-
-      - name: Check the minimum Rust version
+      - name: Check the minimum Rust version ${{ env.RUST_VERSION }}
         id: toolchain
         run: |
           ver_newer() {
@@ -186,15 +181,6 @@ jobs:
             echo "preinstalled=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # - name: Cache the Rust toolchain
-      #   if: steps.toolchain.outputs.preinstalled != 'true'
-      #   uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-      #   # zizmor: ignore[cache-poisoning]
-      #   id: rustup-cache
-      #   with:
-      #     path: ~/.rustup
-      #     key: rustup-${{runner.os}}-${{runner.arch}}-${{env.RUST_VERSION}}
-
       - name: Update the Rust toolchain
         if: steps.toolchain.outputs.preinstalled != 'true' # && steps.rustup-cache.outputs.cache-hit != 'true'
         run: rustup update --no-self-update ${RUST_VERSION}
@@ -203,18 +189,15 @@ jobs:
         if: steps.toolchain.outputs.preinstalled != 'true'
         run: rustup default ${RUST_VERSION}
 
-      - name: Add Rust components
-        if: steps.toolchain.outputs.preinstalled != 'true' # && steps.rustup-cache.outputs.cache-hit != 'true'
-        run: rustup component add clippy # rustfmt
+      - name: Linux - Add Clippy
+        if: startsWith(matrix.os, 'ubuntu') && steps.toolchain.outputs.preinstalled != 'true'
+        run: rustup component add clippy
 
       - name: Linux - Setup Mold
         if: startsWith(matrix.os, 'ubuntu')
         uses: rui314/setup-mold@10ca16bf91dc22e05ebdc935cad9c75ea248f621 # v1
         with:
           mold-version: 3.0.0
-
-      # - name: Display the updated Rust version and toolchains
-      #   run: rustup -V && rustup show --verbose && rustup component list --installed
 
       - name: Define the Cargo cache keys
         id: keys
@@ -242,7 +225,7 @@ jobs:
         if: steps.cargo-cache.outputs.cache-hit != 'true'
         run: cargo fetch --locked
 
-      # Check Rust formatting (cargo fmt --all --check) is done by the `check` job.
+      # The step "Check Rust formatting" (cargo fmt --all --check) is done by the `check` job.
 
       # All the next cargo commands are with `--frozen` (--locked and --offline)
 
