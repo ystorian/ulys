@@ -36,7 +36,7 @@ env:
   # Optional minimum Rust toolchain version.
   # - empty: Use the runner's preinstalled toolchain and skip caching.
   # - set: Install and cache that version only when the runner has an older one.
-  RUST_VERSION: "1.99"
+  RUST_VERSION: ""
 
   # Link with LLVM's lld-link on Windows, faster than the default linker.
   CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER: lld-link.exe
@@ -151,10 +151,10 @@ jobs:
         env:
           WORKSPACE: ${{ github.workspace }}
         run: |
-          Add-MpPreference -ExclusionPath "$env:WORKSPACE\target"
+          # Add-MpPreference -ExclusionPath "$env:WORKSPACE\target" # 37s
           # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
           # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
-          # fsutil behavior set disablelastaccess 1
+          fsutil behavior set disablelastaccess 1
           # fsutil behavior set disable8dot3 1
 
       - name: Checkout the source
