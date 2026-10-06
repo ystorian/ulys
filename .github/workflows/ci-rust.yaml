@@ -145,7 +145,7 @@ jobs:
 
     steps:
 
-      - name: Windows - Exclude build directories from Defender
+      - name: Windows - Optimize filesystem
         if: startsWith(matrix.os, 'windows')
         shell: pwsh
         env:
@@ -159,8 +159,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Display the current Rust version and toolchains
-        run: rustup -V && rustup show --verbose
+      # - name: Display the current Rust version and toolchains
+      #   run: rustup -V && rustup show --verbose
 
       - name: Check the minimum Rust version
         id: toolchain
@@ -186,17 +186,17 @@ jobs:
             echo "preinstalled=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Cache the Rust toolchain
-        if: steps.toolchain.outputs.preinstalled != 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        # zizmor: ignore[cache-poisoning]
-        id: rustup-cache
-        with:
-          path: ~/.rustup
-          key: rustup-${{runner.os}}-${{runner.arch}}-${{env.RUST_VERSION}}
+      # - name: Cache the Rust toolchain
+      #   if: steps.toolchain.outputs.preinstalled != 'true'
+      #   uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      #   # zizmor: ignore[cache-poisoning]
+      #   id: rustup-cache
+      #   with:
+      #     path: ~/.rustup
+      #     key: rustup-${{runner.os}}-${{runner.arch}}-${{env.RUST_VERSION}}
 
       - name: Update the Rust toolchain
-        if: steps.toolchain.outputs.preinstalled != 'true' && steps.rustup-cache.outputs.cache-hit != 'true'
+        if: steps.toolchain.outputs.preinstalled != 'true' # && steps.rustup-cache.outputs.cache-hit != 'true'
         run: rustup update --no-self-update ${RUST_VERSION}
 
       - name: Set the default Rust toolchain
@@ -204,8 +204,8 @@ jobs:
         run: rustup default ${RUST_VERSION}
 
       - name: Add Rust components
-        if: steps.toolchain.outputs.preinstalled != 'true' && steps.rustup-cache.outputs.cache-hit != 'true'
-        run: rustup component add rustfmt clippy
+        if: steps.toolchain.outputs.preinstalled != 'true' # && steps.rustup-cache.outputs.cache-hit != 'true'
+        run: rustup component add clippy # rustfmt
 
       - name: Linux - Setup Mold
         if: startsWith(matrix.os, 'ubuntu')
@@ -213,8 +213,8 @@ jobs:
         with:
           mold-version: 3.0.0
 
-      - name: Display the updated Rust version and toolchains
-        run: rustup -V && rustup show --verbose && rustup component list --installed
+      # - name: Display the updated Rust version and toolchains
+      #   run: rustup -V && rustup show --verbose && rustup component list --installed
 
       - name: Define the Cargo cache keys
         id: keys
