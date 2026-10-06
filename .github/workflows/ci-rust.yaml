@@ -140,10 +140,8 @@ jobs:
             name: Linux arm64
           - os: windows-11-arm
             name: Windows arm64
-            clippy-tests: ""
           - os: macos-26
             name: macOS arm64
-            clippy-tests: ""
 
     steps:
 
@@ -217,6 +215,10 @@ jobs:
         if: steps.toolchain.outputs.preinstalled != 'true' && steps.rustup-cache.outputs.cache-hit != 'true'
         run: rustup component add rustfmt clippy
 
+      - name: Linux - Setup Mold
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: rui314/setup-mold@10ca16bf91dc22e05ebdc935cad9c75ea248f621 # v1
+
       - name: Display the updated Rust version and toolchains
         run: rustup -V && rustup show --verbose && rustup component list --installed
 
@@ -254,7 +256,7 @@ jobs:
       - name: Test
         run: cargo test --frozen --profile ci --all-features --workspace
 
-      - name: Check and lint with Clippy only Linux
+      - name: Linux - Check and lint with Clippy
         if: startsWith(matrix.os, 'ubuntu')
         run: cargo clippy --frozen --profile ci --all-features --workspace -- -D warnings
 
