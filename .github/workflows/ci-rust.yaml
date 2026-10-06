@@ -151,6 +151,9 @@ jobs:
         env:
           WORKSPACE: ${{ github.workspace }}
         run: |
+          Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled, AntivirusEnabled, AMServiceEnabled
+          (Get-MpPreference).ExclusionPath
+          (Get-MpPreference).DisableRealtimeMonitoring
           Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Starting"
           Add-MpPreference -ExclusionPath "$env:WORKSPACE\target" # 37s
           Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Excluded target"
