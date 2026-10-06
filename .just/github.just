@@ -13,6 +13,9 @@ user := if which("gh") == [] { '' } else { shell("gh api user --jq '.login'") }
 # GitHub auth token.
 github_token := if env('GITHUB_TOKEN', '') != '' { env('GITHUB_TOKEN') } else if which("gh") == [] { '' } else { shell('gh auth token 2>/dev/null || echo ""') }
 
+# CI job name required by the status check ruleset.
+status_check := 'Status check'
+
 # Audit actions
 [group('GitHub Actions')]
 [no-exit-message]
@@ -38,7 +41,7 @@ audit_actions:
 [no-exit-message]
 update_actions:
 	echo {{ CYAN }}Update and pin actions in {{ YELLOW }}.github/workflows/*.yaml \
-		{{ CYAN }} with a {{ GREEN }}cooldown of 7 days{{ NORMAL }}
+		{{ CYAN }}with a {{ GREEN }}cooldown of 7 days{{ NORMAL }}
 
 	just check_command_pinact
 
@@ -122,7 +125,7 @@ env_list_secrets_all repo=repo:
 
 # Add an action secret to an environment
 [group('GitHub Actions')]
-set_env_secret secret env='production':
+set_env_secret secret env:
 	echo {{ CYAN }}Add the {{ BOLD }}action secret \
 		{{ NORMAL + YELLOW + uppercase(secret) + CYAN }} to the  {{ BOLD + env + NORMAL + CYAN }} \
 		environment in {{ GREEN + owner + '/' + repo + NORMAL }}
@@ -251,15 +254,32 @@ check_rulesets owner=owner repo=repo:
 			'[.[]|select(.type==$rule)|.ruleset_source_type]|unique|join(", ")'); \
 		if [ -n "$source" ]; then \
 			if [ "$source" = "Organization" ]; then \
-				echo "{{ dim(['✅', GREEN + BOLD + '$rule', 'from', GREEN + '$source']) }}"; \
+				echo "{{ dim([GREEN + '$rule', 'from', GREEN + '$source']) }}"; \
 			else \
-				echo "{{ dim(['✅', GREEN + BOLD + '$rule', 'from', YELLOW + '$source']) }}"; \
+				echo "{{ dim([GREEN + '$rule', 'from', YELLOW + '$source']) }}"; \
 			fi; \
 		else \
-			echo "{{ dim([NORMAL + RED + '❌' + BOLD + '$rule', RED + 'is not set']) }}"; \
+			echo "{{ dim([NORMAL + RED + BOLD + '$rule', RED + 'is not set']) }}"; \
 			missing="$missing $rule"; \
 		fi; \
 	done; \
+	if printf '%s' "$rules" | jq -e 'any(.[]; .type=="required_status_checks")' >/dev/null; then \
+		if printf '%s' "$rules" | jq -e --arg check '{{ status_check }}' \
+			'any(.[]; .type=="required_status_checks" and \
+				any(.parameters.required_status_checks[]?; .context==$check))' >/dev/null; then \
+			echo "{{ dim([GREEN + status_check, 'is required']) }}"; \
+		else \
+			echo "{{ warning([status_check, 'is not a required check']) }}"; \
+			missing="$missing status_check"; \
+		fi; \
+		if printf '%s' "$rules" | jq -e 'any(.[]; .type=="required_status_checks" and \
+			.parameters.strict_required_status_checks_policy==true)' >/dev/null; then \
+			echo "{{ dim([GREEN + 'Branches must be up to date before merging']) }}"; \
+		else \
+			echo "{{ warning('Branches can be out of date before merging') }}"; \
+			missing="$missing strict_status_checks"; \
+		fi; \
+	fi; \
 	if ! ids=$(gh api repos/{{ owner }}/{{ repo }}/rulesets --jq '.[].id' 2>/dev/null); then \
 		ids=''; \
 	fi; \

@@ -33,10 +33,10 @@ env:
   # Disable debug info to reduce the size of `./target`
   CARGO_PROFILE_TEST_DEBUG: 0
 
-  # Optional Rust toolchain override.
+  # Optional minimum Rust toolchain version.
   # - empty: Use the runner's preinstalled toolchain and skip caching.
-  # - set: Install and cache that specific version when it differs from the runner.
-  RUST_VERSION: "1.98.1"
+  # - set: Install and cache that version only when the runner has an older one.
+  RUST_VERSION: "1.99"
 
   # Link with LLVM's lld-link on Windows, faster than the default linker.
   CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER: lld-link.exe
@@ -104,7 +104,7 @@ jobs:
           min_age: "7"
 
       - name: Install cargo tools
-        uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
+        uses: taiki-e/install-action@4cef1412cce204788f482e778a0b9187f9626a29 # v2.87.21
         with:
           tool: |
             cargo-deny
@@ -140,34 +140,24 @@ jobs:
             name: Linux arm64
           - os: windows-11-arm
             name: Windows arm64
-            clippy-tests: ""
           - os: macos-26
             name: macOS arm64
-            clippy-tests: ""
 
     steps:
+
+      - name: Windows - Make it faster
+        if: startsWith(matrix.os, 'windows')
+        shell: pwsh
+        run: |
+          fsutil behavior set disablelastaccess 1
+          fsutil behavior set disable8dot3 1
 
       - name: Checkout the source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Windows - Exclude build directories from Defender
-        if: startsWith(matrix.os, 'windows')
-        shell: pwsh
-        env:
-          WORKSPACE: ${{ github.workspace }}
-        run: |
-          Add-MpPreference -ExclusionPath "$env:WORKSPACE\target"
-          Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
-          Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
-          fsutil behavior set disablelastaccess 1
-          fsutil behavior set disable8dot3 1
-
-      - name: Display the current Rust version and toolchains
-        run: rustup -V && rustup show --verbose
-
-      - name: Check for a pinned Rust version
+      - name: Check the minimum Rust version ${{ env.RUST_VERSION }}
         id: toolchain
         run: |
           ver_newer() {
@@ -180,45 +170,34 @@ jobs:
           }
           CURRENT="$(rustc --version | cut -d' ' -f2)"
           if [ -z "${RUST_VERSION}" ]; then
-            echo "No pinned version, using the preinstalled version ${CURRENT}."
+            echo "No minimum version, using the preinstalled version ${CURRENT}."
             echo "preinstalled=true" >> "$GITHUB_OUTPUT"
-          elif [ "${CURRENT}" = "${RUST_VERSION}" ]; then
-            echo "The preinstalled version ${CURRENT} matches the pinned version."
-            echo "preinstalled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "The preinstalled version ${CURRENT} differs from the pinned version \
+          elif ver_newer "${RUST_VERSION}" "${CURRENT}"; then
+            echo "The preinstalled version ${CURRENT} is older than the minimum version \
               ${RUST_VERSION} - will install ${RUST_VERSION} and cache it."
             echo "preinstalled=false" >> "$GITHUB_OUTPUT"
-            if ver_newer "${CURRENT}" "${RUST_VERSION}"; then
-              echo "::warning title=The pinned version is behind the runner::The preinstalled \
-                version is ${CURRENT} but RUST_VERSION overrides it to an older version \
-                ${RUST_VERSION}. Unset the override to reduce wasting cache and action minutes."
-            fi
+          else
+            echo "The preinstalled version ${CURRENT} meets the minimum version ${RUST_VERSION}."
+            echo "preinstalled=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Cache the Rust toolchain
-        if: steps.toolchain.outputs.preinstalled != 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        # zizmor: ignore[cache-poisoning]
-        id: rustup-cache
-        with:
-          path: ~/.rustup
-          key: rustup-${{runner.os}}-${{runner.arch}}-${{env.RUST_VERSION}}
-
       - name: Update the Rust toolchain
-        if: steps.toolchain.outputs.preinstalled != 'true' && steps.rustup-cache.outputs.cache-hit != 'true'
+        if: steps.toolchain.outputs.preinstalled != 'true' # && steps.rustup-cache.outputs.cache-hit != 'true'
         run: rustup update --no-self-update ${RUST_VERSION}
 
       - name: Set the default Rust toolchain
         if: steps.toolchain.outputs.preinstalled != 'true'
         run: rustup default ${RUST_VERSION}
 
-      - name: Add Rust components
-        if: steps.toolchain.outputs.preinstalled != 'true' && steps.rustup-cache.outputs.cache-hit != 'true'
-        run: rustup component add rustfmt clippy
+      - name: Linux - Add Clippy
+        if: startsWith(matrix.os, 'ubuntu') && steps.toolchain.outputs.preinstalled != 'true'
+        run: rustup component add clippy
 
-      - name: Display the updated Rust version and toolchains
-        run: rustup -V && rustup show --verbose && rustup component list --installed
+      - name: Linux - Setup Mold
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: rui314/setup-mold@10ca16bf91dc22e05ebdc935cad9c75ea248f621 # v1
+        with:
+          mold-version: 3.0.0
 
       - name: Define the Cargo cache keys
         id: keys
@@ -226,7 +205,7 @@ jobs:
           LOCK_HASH: ${{ hashFiles('**/Cargo.lock') }}
         run: |
           echo "lock=$(echo "$LOCK_HASH" | cut -c1-12)" >> "$GITHUB_OUTPUT"
-          echo "rustc=${RUST_VERSION:-$(rustc --version | cut -d' ' -f2)}" >> "$GITHUB_OUTPUT"
+          echo "rustc=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
 
       - name: Cache the Cargo crates
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -246,15 +225,14 @@ jobs:
         if: steps.cargo-cache.outputs.cache-hit != 'true'
         run: cargo fetch --locked
 
-      - name: Validate Rust formatting
-        run: cargo fmt --all --check
+      # The step "Check Rust formatting" (cargo fmt --all --check) is done by the `check` job.
 
       # All the next cargo commands are with `--frozen` (--locked and --offline)
 
       - name: Test
         run: cargo test --frozen --profile ci --all-features --workspace
 
-      - name: Check and lint with Clippy only Linux
+      - name: Linux - Check and lint with Clippy
         if: startsWith(matrix.os, 'ubuntu')
         run: cargo clippy --frozen --profile ci --all-features --workspace -- -D warnings
 

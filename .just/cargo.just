@@ -1,4 +1,4 @@
-# .just/cargo.just
+# @template/.just/cargo.just
 
 # Variables.
 
@@ -334,3 +334,16 @@ check_crate_security crate=repo:
 		"https://crates.io/api/v1/trusted_publishing/github_configs?crate={{ crate }}" \
 	| jq -r '.github_configs[] \
 	| "Repository: \(.repository_owner)/\(.repository_name)\nWorkflow: \(.workflow_filename)\nEnvironment: \(.environment // "any")\n"'
+
+# Show the crates depending on `crate`
+[group('Cargo')]
+[no-exit-message]
+deps crate:
+	cargo tree --target all --all-features --workspace --invert {{ crate }}
+
+# Show dependencies which come in multiple versions
+[group('Cargo')]
+[no-exit-message]
+deps_dupe:
+	echo {{ CYAN }}Show duplicate crates with multiple versions{{ NORMAL }}
+	cargo tree --target all --all-features --workspace --duplicates --quiet

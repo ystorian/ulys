@@ -38,12 +38,12 @@ dim(message) := f'{{ style('dim') + CYAN + '  ' + join_list(message, ' ' + NORMA
 # Set the terminal title
 #
 # Usage:
-# - VS Code: Add `${sequence}` to `terminal.integrated.tabs.description`
+# - VS Code: Add `${sequence}` to `terminal.integrated.tabs.title`
 #
 # Must be used within quotes, for example:
 # - To set the title to "Running": `echo "{{ set_title('Running') }}"`
 # - To reset the title: `echo "{{ set_title('') }}"`
-set_title(title) := f'\033]0;{{ title }}\07'
+set_title(title) := "\u{1b}]0;" + title + "\u{7}"
 
 ## Strings.
 
@@ -248,18 +248,30 @@ check_just:
 [group('Utils')]
 check_markdown:
 	echo {{ CYAN }}Check all {{ BOLD }}markdown{{ NORMAL + CYAN }} files{{ NORMAL }}
-	bunx --bun markdownlint-cli2  "**/*.md"
+
+	BUN_TMPDIR="$TMPDIR" \
+	BUN_INSTALL_CACHE_DIR="$TMPDIR/bun-cache" \
+	bunx --bun markdownlint-cli2 "**/*.md" "#**/.terraform"
 	echo {{ done('') }}
 
 ## Performances
 
-# Disable Spotlight indexing and Time Machine backups on generated files
+# Disable content indexing on generated files, aka `Turbo Boost`
 [group('Utils')]
 [macos]
 [no-exit-message]
+[windows]
 no_index dir='.':
-	echo {{ CYAN }}Disable {{ BOLD }}Spotlight indexing{{ NORMAL + CYAN }} and \
-	{{ BOLD }}Time Machine backups{{ NORMAL + CYAN }} on generated files{{ NORMAL }}
+	echo {{ CYAN }}Disable content indexing on generated files{{ NORMAL }}
+
+	# macOS.
+	echo "{{ if os() == 'macos' { dim(['- Disable', YELLOW + BOLD + 'Time Machine backups']) } }}"
+	echo "{{ if os() == 'macos' { dim(['- Disable', YELLOW + BOLD + 'Spotlight indexing']) } }}"
+
+	# Windows.
+	echo "{{ if os() == 'windows' { dim(['- Disable', YELLOW + BOLD + 'Microsoft Defender']) } }}"
+	echo "{{ if os() == 'windows' { dim([YELLOW + '  (requires administrator privileges)']) } }}"
+	echo "{{ if os() == 'macos' { dim(['- Disable', YELLOW + BOLD + 'content indexing']) } }}"
 
 	if [ '{{ dir }}' != '.' ]; then \
 		echo "{{ BLUE }}Directory: {{ BOLD + absolute_path(dir) + NORMAL }}"; \
@@ -270,17 +282,20 @@ no_index dir='.':
 		exit 1; \
 	fi
 
-	# Global
+	## Global.
 
 	# Rust.
+
 	# Global Cargo `git`, assuming it contains `CACHEDIR.TAG`.
 	just no_index_dir "{{ env('CARGO_HOME') + '/git' }}"
+
 	# Global Cargo `registry`, assuming it contains `CACHEDIR.TAG`.
 	just no_index_dir "{{ env('CARGO_HOME') + '/registry' }}"
+
 	# Global Rustup directory.
 	just no_index_dir "{{ env('RUSTUP_HOME') }}"
 
-	# Local.
+	## Local.
 
 	# Git.
 	just no_index_dir "{{ absolute_path(dir + '/' + '.git') }}"
@@ -308,18 +323,19 @@ no_index_dir dir:
 	# - `.metadata_never_index` works only on Volumes, delete them.
 	# - `com.apple.metadata:kMDItemSupportFileType` is undocumented.
 
-	if [ ! -d "{{ absolute_path(dir) }}" ]; then \
-		exit 0; \
-	else \
-		just delete_file "{{ dir + '/.metadata_never_index' }}"; \
-		if ! [[ "$(xattr -p com.apple.metadata:kMDItemSupportFileType \
-				"{{ absolute_path(dir) }}" 2>/dev/null)" =~ 'MDSystemFile' ]]; then \
-			xattr -w com.apple.metadata:kMDItemSupportFileType MDSystemFile \
-				"{{ absolute_path(dir) }}"; \
-			echo "{{ warning(['Excluded', BOLD + dir, 'from Spotlight indexing']) }}"; \
-		fi; \
+	?[ -d "{{ absolute_path(dir) }}" ]
+
+	# Disable Spotlight indexing.
+	just delete_file "{{ dir + '/.metadata_never_index' }}"
+
+	if ! [[ "$(xattr -p com.apple.metadata:kMDItemSupportFileType \
+			"{{ absolute_path(dir) }}" 2>/dev/null)" =~ 'MDSystemFile' ]]; then \
+		xattr -w com.apple.metadata:kMDItemSupportFileType MDSystemFile \
+			"{{ absolute_path(dir) }}"; \
+		echo "{{ warning(['Excluded', BOLD + dir, 'from Spotlight indexing']) }}"; \
 	fi
 
+	# Disable Time Machine - enable on `.git`.
 	if [[ "{{ absolute_path(dir) }}" =~ '/.git' ]]; then \
 		if [[ "$(tmutil isexcluded "{{ absolute_path(dir) }}")" =~ '[Excluded]' ]]; then \
 			tmutil removeexclusion "{{ absolute_path(dir) }}"; \
@@ -331,3 +347,44 @@ no_index_dir dir:
 			echo "{{ warning(['Excluded', BOLD + dir, 'from Time Machine backups']) }}"; \
 		fi; \
 	fi
+	echo "{{ dim(GREEN + absolute_path(dir)) }}"
+
+# Disable content indexing and Microsoft Defender on a directory
+[group('Utils')]
+[no-exit-message]
+[private]
+[windows]
+no_index_dir dir:
+	# Notes:
+	# - Command flags on Windows require double slash since we are running in bash.
+	# - Administrator privileges are required to disable Microsoft Defender on directories.
+
+	?[ -d "{{ absolute_path(dir) }}" ]
+
+	# Disable content indexing.
+	attrib +i "{{ absolute_path(dir) }}" //s //d
+
+	# Disable Microsoft Defender.
+	if ! [ "$(powershell -NoProfile -Command "& {(Get-MpPreference).ExclusionPath -contains '{{ absolute_path(dir) }}'}")" == 'False' ]; then \
+		if ! net session >/dev/null 2>&1; then \
+			echo "{{ error(['Administrator privileges required to disable Microsoft Defender on', BOLD + dir]) }}"; \
+			exit 1; \
+		fi; \
+		powershell \
+			-NoProfile \
+			-Command "& {Add-MpPreference -ExclusionPath '{{ absolute_path(dir) }}'" \
+		&& echo "{{ warning(['Excluded', BOLD + dir, 'from Microsoft Defender']) }}" \
+		|| echo "{{ error(['Could not exclude', BOLD + dir, 'from Microsoft Defender']) }}"; \
+	fi
+
+# Alias `j` to `just`
+[private]
+[unix]
+alias_just:
+	ln -s "{{ which('just') }}" "{{ parent_directory(which('just')) / 'j' }}"
+
+# Alias `j` to `just`
+[private]
+[windows]
+alias_just:
+	ln -s "{{ which('just') }}" "{{ parent_directory(which('just')) / 'j.exe' }}"
