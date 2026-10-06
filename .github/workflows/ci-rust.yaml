@@ -145,22 +145,22 @@ jobs:
 
     steps:
 
+      - name: Windows - Exclude build directories from Defender
+        if: startsWith(matrix.os, 'windows')
+        shell: pwsh
+        env:
+          WORKSPACE: ${{ github.workspace }}
+        run: |
+          Add-MpPreference -ExclusionPath "$env:WORKSPACE\target"
+          # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
+          # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
+          # fsutil behavior set disablelastaccess 1
+          # fsutil behavior set disable8dot3 1
+
       - name: Checkout the source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      # - name: Windows - Exclude build directories from Defender
-      #   if: startsWith(matrix.os, 'windows')
-      #   shell: pwsh
-      #   env:
-      #     WORKSPACE: ${{ github.workspace }}
-      #   run: |
-      #     Add-MpPreference -ExclusionPath "$env:WORKSPACE\target"
-      #     Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
-      #     Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
-      #     fsutil behavior set disablelastaccess 1
-      #     fsutil behavior set disable8dot3 1
 
       - name: Display the current Rust version and toolchains
         run: rustup -V && rustup show --verbose
