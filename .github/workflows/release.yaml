@@ -156,6 +156,12 @@ jobs:
       - name: Add the Rust target
         run: rustup target add "$TARGET"
 
+      - name: Linux - Setup Mold
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: rui314/setup-mold@10ca16bf91dc22e05ebdc935cad9c75ea248f621 # v1
+        with:
+          mold-version: 3.0.0
+
       - name: Build
         # The `ulys` binary requires the `cli` feature.
         run: cargo build --locked --release --target "$TARGET" --features cli
