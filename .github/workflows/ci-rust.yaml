@@ -33,10 +33,10 @@ env:
   # Disable debug info to reduce the size of `./target`
   CARGO_PROFILE_TEST_DEBUG: 0
 
-  # Optional Rust toolchain override.
+  # Optional minimum Rust toolchain version.
   # - empty: Use the runner's preinstalled toolchain and skip caching.
-  # - set: Install and cache that specific version when it differs from the runner.
-  RUST_VERSION: "1.98.1"
+  # - set: Install and cache that version only when the runner has an older one.
+  RUST_VERSION: "1.99"
 
   # Link with LLVM's lld-link on Windows, faster than the default linker.
   CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER: lld-link.exe
@@ -165,7 +165,7 @@ jobs:
       - name: Display the current Rust version and toolchains
         run: rustup -V && rustup show --verbose
 
-      - name: Check for a pinned Rust version
+      - name: Check the minimum Rust version
         id: toolchain
         run: |
           ver_newer() {
@@ -178,20 +178,15 @@ jobs:
           }
           CURRENT="$(rustc --version | cut -d' ' -f2)"
           if [ -z "${RUST_VERSION}" ]; then
-            echo "No pinned version, using the preinstalled version ${CURRENT}."
+            echo "No minimum version, using the preinstalled version ${CURRENT}."
             echo "preinstalled=true" >> "$GITHUB_OUTPUT"
-          elif [ "${CURRENT}" = "${RUST_VERSION}" ]; then
-            echo "The preinstalled version ${CURRENT} matches the pinned version."
-            echo "preinstalled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "The preinstalled version ${CURRENT} differs from the pinned version \
+          elif ver_newer "${RUST_VERSION}" "${CURRENT}"; then
+            echo "The preinstalled version ${CURRENT} is older than the minimum version \
               ${RUST_VERSION} - will install ${RUST_VERSION} and cache it."
             echo "preinstalled=false" >> "$GITHUB_OUTPUT"
-            if ver_newer "${CURRENT}" "${RUST_VERSION}"; then
-              echo "::warning title=The pinned version is behind the runner::The preinstalled \
-                version is ${CURRENT} but RUST_VERSION overrides it to an older version \
-                ${RUST_VERSION}. Unset the override to reduce wasting cache and action minutes."
-            fi
+          else
+            echo "The preinstalled version ${CURRENT} meets the minimum version ${RUST_VERSION}."
+            echo "preinstalled=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Cache the Rust toolchain
@@ -230,7 +225,7 @@ jobs:
           LOCK_HASH: ${{ hashFiles('**/Cargo.lock') }}
         run: |
           echo "lock=$(echo "$LOCK_HASH" | cut -c1-12)" >> "$GITHUB_OUTPUT"
-          echo "rustc=${RUST_VERSION:-$(rustc --version | cut -d' ' -f2)}" >> "$GITHUB_OUTPUT"
+          echo "rustc=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
 
       - name: Cache the Cargo crates
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
