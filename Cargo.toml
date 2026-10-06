@@ -11,7 +11,8 @@ readme = "README.md"
 # Forked from https://github.com/dylanhart/ulid-rs
 keywords = ["ulid", "uuidv8", "sortable", "checksum"]
 publish = true
-include = ["src/**/*.rs", "Cargo.toml", "Cargo.lock", "README.md", "/*.svg", "LICENSE-*"]
+include = ["src/**/*.rs", "Cargo.toml", "Cargo.lock", "README.md", "/*.svg", "LICENSE*"]
+
 
 [package.metadata.binstall.signing]
 algorithm = "minisign"
