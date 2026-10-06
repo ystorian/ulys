@@ -154,8 +154,8 @@ jobs:
           # Add-MpPreference -ExclusionPath "$env:WORKSPACE\target" # 37s
           # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
           # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
-          fsutil behavior set disablelastaccess 1
-          # fsutil behavior set disable8dot3 1
+          fsutil behavior set disablelastaccess 1 # 1s
+          fsutil behavior set disable8dot3 1
 
       - name: Checkout the source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -245,8 +245,7 @@ jobs:
         if: steps.cargo-cache.outputs.cache-hit != 'true'
         run: cargo fetch --locked
 
-      - name: Validate Rust formatting
-        run: cargo fmt --all --check
+      # Check Rust formatting (cargo fmt --all --check) is done by the `check` job.
 
       # All the next cargo commands are with `--frozen` (--locked and --offline)
 
