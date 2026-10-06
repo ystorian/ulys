@@ -151,20 +151,23 @@ jobs:
         env:
           WORKSPACE: ${{ github.workspace }}
         run: |
-          Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled, AntivirusEnabled, AMServiceEnabled
-          (Get-MpPreference).ExclusionPath
-          (Get-MpPreference).DisableRealtimeMonitoring
           Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Starting"
-          Add-MpPreference -ExclusionPath "$env:WORKSPACE\target" # 37s
-          Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Excluded target"
-          Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
-          Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Excluded .cargo"
-          Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
-          Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Excluded .rustup"
+          # Add-MpPreference -ExclusionPath "$env:WORKSPACE\target" # 37s
+          # Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Excluded target"
+          # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.cargo"
+          # Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Excluded .cargo"
+          # Add-MpPreference -ExclusionPath "$env:USERPROFILE\.rustup"
+          # Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Excluded .rustup"
           fsutil behavior set disablelastaccess 1 # 1s
           Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - disablelastaccess"
           fsutil behavior set disable8dot3 1
           Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - disable8dot3"
+          Set-MpPreference -DisableRealtimeMonitoring $true
+          Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled, AntivirusEnabled, AMServiceEnabled
+          (Get-MpPreference).ExclusionPath
+          (Get-MpPreference).DisableRealtimeMonitoring
+          Write-Host "$(Get-Date -Format 'HH:mm:ss.fff') - Fin"
+
 
       - name: Checkout the source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
