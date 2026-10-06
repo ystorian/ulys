@@ -206,11 +206,11 @@ mod tests {
 		let valid = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").unwrap();
 		let invalid = Ulys::from_string("068dkwmn3a441g20mzbsmy0000").unwrap();
 
-		assert!(problems(valid).is_empty());
-		assert!(problems(Ulys::new()).is_empty());
+		assert_eq!(problems(valid), [] as [&str; 0]);
+		assert_eq!(problems(Ulys::new()), [] as [&str; 0]);
 		assert_eq!(problems(invalid), ["bad checksum"]);
-		assert!(problems(ulys_at(Ulys::MIN_TIME_MS)).is_empty());
-		assert!(problems(ulys_at(Ulys::MAX_TIME_MS - 1)).is_empty());
+		assert_eq!(problems(ulys_at(Ulys::MIN_TIME_MS)), [] as [&str; 0]);
+		assert_eq!(problems(ulys_at(Ulys::MAX_TIME_MS - 1)), [] as [&str; 0]);
 		assert_eq!(
 			problems(ulys_at(Ulys::MIN_TIME_MS - 1)),
 			["time before 2020"]
