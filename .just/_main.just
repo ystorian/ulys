@@ -18,31 +18,23 @@ import 'ci.just'
 additional_cargo_tools := ['zizmor']
 
 # Setup this project (tooling, hooks)
+[group('_')]
 setup:
-	# Make it fast.
 	just no_index
-
-	# Git pre-commit hook.
-	just install_git_hooks
 
 	# Rust.
 	just update_rust
 	just update_cargo_tools
 
-# Bump all dependancies
+# Bump all dependencies
+[group('_')]
 bump:
-	# Just
 	just lint_just
-
-	# Rust.
 	just bump_cargo
 	just fetch
-
-	# GitHub Actions.
 	just update_actions
 	just audit_actions
 
 # Clean
 clean:
-	# Rust.
 	just clean_workspace

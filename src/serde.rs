@@ -1,3 +1,5 @@
+// src/serde.rs
+
 //! Serialization and deserialization.
 //!
 //! By default, serialization and deserialization go through ULYSes 26-character
