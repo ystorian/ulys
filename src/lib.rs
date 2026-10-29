@@ -1,3 +1,5 @@
+// src/lib.rs
+
 #[cfg(feature = "postgres")]
 mod postgres;
 #[cfg(feature = "serde")]
@@ -57,7 +59,7 @@ impl Ulys {
 	/// Mask of the checksum portion.
 	const CHECK_MASK: u128 = (1 << Self::CHECK_BITS) - 1;
 	/// Mask of the UUID version field (bits 48 to 51).
-	const VERSION_MASK: u128 = 0xF << 76;
+	const VERSION_MASK: u128 = 0xf << 76;
 	/// UUID version 8.
 	const VERSION_8: u128 = 0x8 << 76;
 	/// Mask of the UUID variant field (bits 64 and 65).
