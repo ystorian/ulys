@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-26.04-arm
     permissions:
       contents: write # Create the draft release.
+    timeout-minutes: 1
 
     steps:
       - name: Checkout the source
@@ -107,6 +108,7 @@ jobs:
       run:
         # Only for matrix using Windows.
         shell: bash
+    timeout-minutes: 3
 
     strategy:
       fail-fast: false
@@ -224,6 +226,7 @@ jobs:
     environment: release
     permissions:
       contents: write # Attach the archives to the draft release.
+    timeout-minutes: 1
 
     steps:
       - name: Checkout the source
@@ -320,6 +323,7 @@ jobs:
     runs-on: ubuntu-26.04-arm
     permissions:
       contents: write # Publish the draft release.
+    timeout-minutes: 1
 
     steps:
       - name: Validate the release jobs
@@ -354,6 +358,7 @@ jobs:
     permissions:
       contents: read
       id-token: write # OpenID Connect token for crates.io Trusted Publishing.
+    timeout-minutes: 1
 
     steps:
       - name: Checkout the source

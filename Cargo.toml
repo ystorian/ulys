@@ -2,7 +2,7 @@
 
 [package]
 name = "ulys"
-version = "31.2.1"
+version = "31.2.2"
 edition = "2024"
 description = "User-friendly and UUIDv8-compatible ULID tokens with checksum"
 license = "MIT OR Apache-2.0"
