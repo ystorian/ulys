@@ -60,8 +60,8 @@ check profile='dev': check_env
 
 # Check dependencies and licenses
 [group('Rust')]
-deny:
-	echo {{ title(['Run', BOLD + 'cargo-deny']) }}
+check_deny: check_command_deny
+	echo {{ title(['Check dependencies and licenses with', BOLD + 'cargo-deny']) }}
 
 	# Delete the cache if corrupted.
 	cache="${TMPDIR:-${TEMP:-/tmp}}/cargo-deny/std-replacement-data"; \
@@ -83,6 +83,16 @@ format:
 	echo {{ done('') }}
 alias fmt := format
 
+# Check Rust code formatting
+[group('Rust')]
+check_rust:
+	echo {{ title(['Check Rust code formatting with', BOLD + 'cargo fmt']) }}
+
+	echo {{ info(shell('cargo fmt --version')) }}
+	cargo fmt --all --check
+
+	echo {{ done('') }}
+
 # Clippy
 [arg('fix', long='fix', flag, help='Fix easy Clippy lints')]
 [arg('links', long='links', flag, help='Show Clippy docs links')]
@@ -98,22 +108,23 @@ clippy links strict dupes fix profile='dev': check_env
 	{{ if strict { echo(warning([BOLD + 'strict', 'mode enabled with Ystorian lints'])) } }}
 	{{ if fix { echo(warning([BOLD + 'fix', 'mode enabled'])) } }}
 
-	# --warn clippy::restriction
-	# --allow clippy::needless_return
-	# --deny clippy::implicit_return \
+	# The `ci` profile runs offline.
 
 	{{ if !links && !strict { 'env CLIPPY_DISABLE_DOCS_LINKS=true' } }} \
 	cargo clippy \
 		{{ if profile != 'release' { '--profile ' + profile + ' --quiet' } else { '--release' } }} \
 		{{ if fix { '--fix --allow-dirty' } }} \
+		{{ if profile == 'ci' { '--frozen' } }} \
 		--all-targets --all-features --all -- \
 		--warn clippy::pedantic \
-		--warn clippy::cargo --allow clippy::multiple_crate_versions \
+		--warn clippy::cargo \
+		--allow clippy::multiple_crate_versions \
 		--deny clippy::all \
 		{{ if dupes { '--warn clippy::multiple_crate_versions' } }} \
 		{{ if strict { prepend('--warn clippy::', clippy_warn_list) } }} \
 		{{ if strict { prepend('--deny clippy::', clippy_deny_list) } }} \
-		{{ prepend('--allow clippy::', clippy_allow_list) }}
+		{{ prepend('--allow clippy::', clippy_allow_list) }} \
+		--deny warnings
 
 	echo {{ done([profile, reset_title]) }}
 
@@ -140,6 +151,7 @@ clippy_fix: check_env
 # Run unit and integration tests
 [group('Rust')]
 [no-exit-message]
+[script]
 test profile='dev': check_env
 	echo {{ title(['Run', BOLD + 'cargo test']) }}
 	{{ display_profile(profile) }}
@@ -147,18 +159,22 @@ test profile='dev': check_env
 	# Notes:
 	# - `kache test-runner` version 1.00 errors with "no LC_RPATH's found".
 	# - We bypass `kache` on macOS with `env -u CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER`.
+	# - The `ci` profile runs once, offline and locked (`--frozen`).
 
-	if [ "{{ profile }}" != "release" ]; then \
-		if ! env -u CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER \
-				cargo test --all-features --workspace --future-incompat-report --quiet \
-				--profile {{ profile }} >/dev/null 2>&1; then \
-			env -u CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER \
-				cargo test --all-features --workspace --future-incompat-report \
-				--profile {{ profile }}; \
-		fi; \
-	else \
-		env -u CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER \
-			cargo test --all-features --workspace --future-incompat-report --release; \
+	cargo_test='cargo test --all-features --workspace --future-incompat-report';
+
+	# Bypass `kache` on macOS.
+	env -u CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER >/dev/null;
+
+	if [ "{{ profile }}" = "ci" ]; then
+		$cargo_test --frozen --profile ci;
+	elif [ "{{ profile }}" != "release" ]; then
+		if ! $cargo_test --quiet --profile {{ profile }} >/dev/null 2>&1; then
+			echo {{ warning('Tests failed, running again with verbose output') }};
+			$cargo_test --profile {{ profile }};
+		fi;
+	else
+		$cargo_test --release;
 	fi
 
 	echo {{ done([profile, reset_title]) }}
@@ -171,6 +187,32 @@ clean_workspace:
 	cargo-clean-all --keep-empty-target --keep-executable-same-dir --yes .
 
 	echo {{ done('') }}
+
+# Delete the workspace artifacts of `profile`, keep the dependencies
+[group('Rust')]
+[script]
+prune_target profile='dev': check_command_jq
+	echo {{ title(['Prune the workspace artifacts in', BOLD + 'target/' + profile]) }}
+	# Used before the CI saves the Cargo cache.
+
+	if [ ! -d "target/{{ profile }}" ]; then
+		echo {{ warning('The target is empty for this profile, nothing to prune') }};
+		exit 0;
+	fi
+
+	dir="target/{{ profile }}"
+	echo {{ note(['Before pruning:', YELLOW + '$(du -sh "target")']) }};
+
+	crates="$(cargo metadata --frozen --no-deps --format-version 1 | jq -r '.packages[].name')"
+	for crate in $crates; do
+		file="$(printf '%s' "$crate" | tr '-' '_')"
+		rm -rf "$dir/.fingerprint/$crate-"* "$dir/build/$crate-"*
+		rm -f "$dir/deps/$file-"* "$dir/deps/lib$file-"* "$dir/$crate" "$dir/$crate".*
+	done
+	rm -rf "$dir/incremental" "$dir/examples"
+	echo {{ note(['After pruning: ', GREEN + '$(du -sh "target")']) }};
+
+	echo {{ done(profile) }}
 
 # Build and install on this machine
 [group('Rust')]
@@ -190,3 +232,9 @@ fetch:
 	cargo fetch --locked --verbose
 
 	echo {{ done('') }}
+
+# Check if `cargo-deny` is available
+[group('Utils')]
+[private]
+check_command_deny:
+	just check_command cargo-deny -c='cargo-deny'

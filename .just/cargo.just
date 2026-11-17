@@ -31,6 +31,12 @@ cargo_is_publishable := if trim(shell('tomli query --filepath Cargo.toml workspa
 # Return true if package is set using `include` in Cargo.toml (supports workspace).
 cargo_has_include := if trim(shell('tomli query --filepath Cargo.toml workspace.package.include 2>/dev/null || tomli query --filepath Cargo.toml package.include 2>/dev/null || echo false')) =~ 'Cargo' { 'true' } else { 'false' }
 
+# Rarely used variables and functions, to stop `just-lsp` from complaining
+[group('Cargo')]
+[private]
+_cargo_unused:
+	echo {{ llvm_path }}
+
 # Install cargo tools
 [env("GITHUB_TOKEN", github_token)]
 [group('Cargo')]
@@ -109,7 +115,7 @@ bump_cargo:
 
 	cargo update --verbose
 
-	just deny
+	just check_deny
 
 	echo {{ done('') }}
 

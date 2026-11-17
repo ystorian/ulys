@@ -15,26 +15,6 @@ publish = true
 include = ["src/**/*.rs", "Cargo.toml", "Cargo.lock", "README.md", "/*.svg", "LICENSE*"]
 
 
-[package.metadata.binstall.signing]
-algorithm = "minisign"
-pubkey = "RWQlX4eaj3pSiE/CzvlxHdkTDPVjZy92O+TkoVU011r99ALGHzY4qYNm"
-
-[lib]
-name = "ulys"
-path = "src/lib.rs"
-
-[[bin]]
-name = "ulys"
-path = "src/main.rs"
-required-features = ["cli"]
-
-[features]
-default = []
-cli = ["dep:clap", "uuid"]
-postgres = ["dep:bytes", "dep:postgres-types"]
-serde = ["dep:serde", "dep:serde_derive", "dep:uuid"]
-uuid = ["dep:uuid"]
-
 [dependencies]
 base32 = "0.5"
 bytes = { version = "1.12", optional = true }
@@ -49,9 +29,40 @@ clap = { version = "4.6", optional = true, default-features = false, features = 
 postgres-types = { version = "0.2", optional = true }
 rand = "0.10"
 serde = { version = "1.0", optional = true }
-serde_derive = { version = "1.0", optional = true }
 uuid = { version = "1.29", optional = true }
 xxhash-rust = { version = "0.8", features = ["xxh3", "const_xxh3"] }
+
+
+[dev-dependencies]
+serde_derive = "1.0"
+
+
+[features]
+default = []
+cli = ["dep:clap", "uuid"]
+postgres = ["dep:bytes", "dep:postgres-types"]
+serde = ["dep:serde", "uuid"]
+uuid = ["dep:uuid"]
+
+
+[package.metadata.binstall.signing]
+algorithm = "minisign"
+pubkey = "RWQlX4eaj3pSiE/CzvlxHdkTDPVjZy92O+TkoVU011r99ALGHzY4qYNm"
+
+[lib]
+name = "ulys"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ulys"
+path = "src/main.rs"
+required-features = ["cli"]
+
+
+[workspace.metadata.typos.files]
+ignore-hidden = false
+extend-exclude = [".git/**", "target/**"]
+
 
 [profile.release]
 opt-level = "z"
