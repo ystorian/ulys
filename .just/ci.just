@@ -13,12 +13,16 @@ ci:
 	just lint_just
 	just lock_cargo
 	just format
-	just check_actions
-	just audit_actions
 	just fetch
 
-	# CI tests.
-	just deny
+	# Check.
+	just check_typos
+	just check_rust
+	just check_deny
+	just check_actions --fast
+	just audit_actions --fast
+
+	# Test.
 	just test
 	just clippy
 
