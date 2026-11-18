@@ -24,6 +24,6 @@ ci:
 
 	# Test.
 	just test
-	just clippy
+	just clippy --strict
 
 	echo {{ done('') }}

@@ -24,7 +24,7 @@ jobs:
 
   changes:
     name: Workflows
-    uses: ystorian/workflows/.github/workflows/detect_changes.yaml@e8851358670fbdc073675919957d35d8a766ad96 # v1.9.1
+    uses: ystorian/workflows/.github/workflows/detect_changes.yaml@a0d64f0770981a7601234405af0afa14637fa7dc # v1.9.2
     permissions:
       contents: read
     with:
@@ -35,25 +35,26 @@ jobs:
     name: Workflows
     needs: changes
     if: needs.changes.outputs.run == 'true'
-    uses: ystorian/workflows/.github/workflows/check.yaml@e8851358670fbdc073675919957d35d8a766ad96 # v1.9.1
+    uses: ystorian/workflows/.github/workflows/check.yaml@a0d64f0770981a7601234405af0afa14637fa7dc # v1.9.2
     permissions:
       actions: write # Required to cancel the `test` jobs on failure.
       contents: read
     with:
       tools: cargo-deny
-      recipes: check_rust check_deny
+      recipes: check_deny
 
 
   test:
     name: Workflows
     needs: changes
     if: needs.changes.outputs.run == 'true'
-    uses: ystorian/workflows/.github/workflows/test_rust.yaml@e8851358670fbdc073675919957d35d8a766ad96 # v1.9.1
+    uses: ystorian/workflows/.github/workflows/test_rust.yaml@a0d64f0770981a7601234405af0afa14637fa7dc # v1.9.2
     permissions:
       contents: read
     with:
       runners: '["ubuntu-26.04-arm", "windows-11-arm", "macos-26"]'
       rust_version: "1.100"
+      clippy_strict: true
       timeout: 5
 
 
@@ -61,7 +62,7 @@ jobs:
     name: Workflows
     needs: test
     if: github.ref == 'refs/heads/main'
-    uses: ystorian/workflows/.github/workflows/cargo_cache_cleanup.yaml@e8851358670fbdc073675919957d35d8a766ad96 # v1.9.1
+    uses: ystorian/workflows/.github/workflows/cargo_cache_cleanup.yaml@a0d64f0770981a7601234405af0afa14637fa7dc # v1.9.2
     permissions:
       actions: write # Required to list and delete the cache entries.
 
@@ -71,6 +72,6 @@ jobs:
     name: Workflows
     needs: [changes, check, test]
     if: always()
-    uses: ystorian/workflows/.github/workflows/status_check.yaml@e8851358670fbdc073675919957d35d8a766ad96 # v1.9.1
+    uses: ystorian/workflows/.github/workflows/status_check.yaml@a0d64f0770981a7601234405af0afa14637fa7dc # v1.9.2
     with:
       needs: ${{ toJSON(needs) }}

@@ -8,8 +8,9 @@ pub mod serde;
 mod uuid;
 
 use base32::Alphabet;
+use core::error::Error;
 use core::fmt;
-use rand::RngExt;
+use rand::RngExt as _;
 use std::time::{Duration, SystemTime};
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -31,25 +32,25 @@ impl fmt::Display for UlysError {
 	}
 }
 
-impl std::error::Error for UlysError {}
+impl Error for UlysError {}
 
 #[derive(Debug, Default, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Ulys(pub u128);
 
 impl Ulys {
-	/// Length of a string-encoded Ulys
+	/// Length of a string-encoded Ulys.
 	pub const ULYS_LEN: usize = 26;
 
-	/// The number of bits in a Ulys time portion
+	/// The number of bits in a Ulys time portion.
 	pub const TIME_BITS: u8 = 48;
-	/// The number of bits in a Ulys random portion, including the `UUIDv8` version and variant bits
+	/// The number of bits in a Ulys random portion, including the `UUIDv8` version and variant bits.
 	pub const RAND_BITS: u8 = 48;
-	/// The number of bits in a Ulys checksum
+	/// The number of bits in a Ulys checksum.
 	pub const CHECK_BITS: u8 = 32;
 
-	/// First valid time, 2020-01-01 00:00:00 UTC, in milliseconds since the Unix epoch
+	/// First valid time, 2020-01-01 00:00:00 UTC, in milliseconds since the Unix epoch.
 	pub const MIN_TIME_MS: u64 = 1_577_836_800_000;
-	/// First time after the valid range, 2101-01-01 00:00:00 UTC, in milliseconds since the Unix epoch
+	/// First time after the valid range, 2101-01-01 00:00:00 UTC, in milliseconds since the Unix epoch.
 	pub const MAX_TIME_MS: u64 = 4_133_980_800_000;
 
 	/// Mask of the timestamp value, before the shift.
@@ -67,24 +68,24 @@ impl Ulys {
 	/// UUID variant of RFC 9562.
 	const VARIANT_RFC9562: u128 = 0b10 << 62;
 
-	/// Creates a new Ulys with the current time (UTC)
+	/// Creates a new Ulys with the current time (UTC).
 	#[must_use]
 	pub fn new() -> Self {
 		Self::from_datetime(SystemTime::now())
 	}
 
-	/// Creates a Ulys from a Crockford Base32 encoded string
+	/// Creates a Ulys from a Crockford Base32 encoded string.
 	///
 	/// # Errors
 	///
 	/// An `UlysError` will be returned when the given string is not formatted
 	/// properly.
-	pub fn from_string(s: &str) -> Result<Ulys, UlysError> {
-		if s.len() != Ulys::ULYS_LEN {
+	pub fn from_string(text: &str) -> Result<Ulys, UlysError> {
+		if text.len() != Ulys::ULYS_LEN {
 			return Err(UlysError::ParseInvalidLength);
 		}
 
-		let value = base32::decode(Alphabet::Crockford, s)
+		let value = base32::decode(Alphabet::Crockford, text)
 			.ok_or(UlysError::ParseBase32Decode)?
 			.try_into()
 			.map_err(|_| UlysError::ParseToArray)?;
@@ -92,39 +93,39 @@ impl Ulys {
 		Ok(Ulys(u128::from_be_bytes(value)))
 	}
 
-	/// Gets the datetime of when this Ulys was created accurate to 1ms
+	/// Gets the datetime of when this Ulys was created accurate to 1ms.
 	#[must_use]
 	pub fn datetime(&self) -> SystemTime {
 		let stamp = self.timestamp_ms();
 		SystemTime::UNIX_EPOCH + Duration::from_millis(stamp)
 	}
 
-	/// Checks if the checksum of the Ulys is valid
+	/// Checks if the checksum of the Ulys is valid.
 	#[must_use]
 	pub fn is_valid(&self) -> bool {
 		self.0 == Self::with_checksum(self.0 & !Self::CHECK_MASK)
 	}
 
-	/// Checks if the Ulys has the `UUIDv8` version and variant bits
+	/// Checks if the Ulys has the `UUIDv8` version and variant bits.
 	#[must_use]
 	pub fn is_uuidv8(&self) -> bool {
 		self.0 & Self::VERSION_MASK == Self::VERSION_8
 			&& self.0 & Self::VARIANT_MASK == Self::VARIANT_RFC9562
 	}
 
-	/// Checks if the time of the Ulys is from 2020 to 2100, both included
+	/// Checks if the time of the Ulys is from 2020 to 2100, both included.
 	#[must_use]
 	pub fn is_valid_time(&self) -> bool {
 		(Self::MIN_TIME_MS..Self::MAX_TIME_MS).contains(&self.timestamp_ms())
 	}
 
-	/// Test if the Ulys is nil
+	/// Test if the Ulys is nil.
 	#[must_use]
 	pub fn is_default(&self) -> bool {
 		self.0 == 0u128
 	}
 
-	/// Creates a new Ulys with the given datetime
+	/// Creates a new Ulys with the given datetime.
 	fn from_datetime(datetime: SystemTime) -> Self {
 		let timestamp = datetime
 			.duration_since(SystemTime::UNIX_EPOCH)
@@ -141,24 +142,24 @@ impl Ulys {
 		Self(Self::with_checksum(data))
 	}
 
-	/// Sets the checksum bits of the given data, the checksum bits of `data` must be zero
+	/// Sets the checksum bits of the given data, the checksum bits of `data` must be zero.
 	fn with_checksum(data: u128) -> u128 {
 		data | u128::from(Self::checksum(data) >> Self::CHECK_BITS)
 	}
 
-	/// Creates a checksum for the given data
+	/// Creates a checksum for the given data.
 	fn checksum(data: u128) -> u64 {
 		xxh3_64(data.to_be_bytes().as_slice())
 	}
 
-	/// Gets the timestamp section of this Ulys
+	/// Gets the timestamp section of this Ulys.
 	fn timestamp_ms(&self) -> u64 {
 		(self.0 >> (Self::RAND_BITS + Self::CHECK_BITS)) as u64
 	}
 }
 
-impl std::fmt::Display for Ulys {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Ulys {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(
 			f,
 			"{}",
@@ -172,7 +173,7 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn test_is_default() {
+	fn is_default() {
 		let ulys = Ulys::new();
 		assert!(!ulys.is_default());
 
@@ -183,7 +184,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_from_string() {
+	fn from_string_works() {
 		let text = "068cbxpc1wy9d0v9gbhrg0020r";
 		let ulys = Ulys::from_string(text);
 
@@ -195,7 +196,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_from_string_invalid_length() {
+	fn from_string_invalid_length() {
 		let ulys = Ulys::from_string("ABC");
 
 		assert!(ulys.is_err());
@@ -203,7 +204,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_from_string_invalid_letter() {
+	fn from_string_invalid_letter() {
 		let ulys = Ulys::from_string("0000000000000u000000000000");
 
 		assert!(ulys.is_err());
@@ -211,7 +212,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_dynamic() {
+	fn dynamic() {
 		let ulys = Ulys::new();
 		let encoded = ulys.to_string();
 		let ulys2 = Ulys::from_string(&encoded).expect("failed to deserialize");
@@ -220,7 +221,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_datetime() {
+	fn datetime() {
 		let dt = SystemTime::now();
 		let ulys = Ulys::from_datetime(dt);
 
@@ -229,7 +230,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_timestamp() {
+	fn timestamp() {
 		let dt = SystemTime::now();
 		let ulys = Ulys::from_datetime(dt);
 		let ts = dt
@@ -241,7 +242,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_order() {
+	fn order() {
 		let dt = SystemTime::now();
 		let ulys1 = Ulys::from_datetime(dt);
 		let ulys2 = Ulys::from_datetime(dt + Duration::from_millis(1));
@@ -250,14 +251,14 @@ mod tests {
 	}
 
 	#[test]
-	fn test_is_valid() {
+	fn is_valid() {
 		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").expect("failed to deserialize");
 
 		assert!(ulys.is_valid());
 	}
 
 	#[test]
-	fn test_new_is_valid_uuidv8() {
+	fn new_is_valid_uuidv8() {
 		for _ in 0..1000 {
 			let ulys = Ulys::new();
 			assert!(ulys.is_valid());
@@ -266,7 +267,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_is_valid_time() {
+	fn is_valid_time() {
 		let at = |ms: u64| Ulys(u128::from(ms) << (Ulys::RAND_BITS + Ulys::CHECK_BITS));
 
 		assert!(Ulys::new().is_valid_time());
@@ -278,7 +279,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_legacy_is_not_uuidv8() {
+	fn legacy_is_not_uuidv8() {
 		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").expect("failed to deserialize");
 
 		assert!(ulys.is_valid());
@@ -286,7 +287,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_is_not_valid() {
+	fn is_not_valid() {
 		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmy0000").expect("failed to deserialize");
 
 		assert!(!ulys.is_valid());

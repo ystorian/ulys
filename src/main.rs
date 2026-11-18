@@ -15,37 +15,42 @@ const INVALID: u8 = 1;
 /// Exit code when a value is not a ULYS or a UUID, or for an internal problem.
 const ERROR: u8 = 2;
 
+/// Command-line arguments.
 #[derive(Parser)]
 #[command(name = "ulys", version, about = "Generate and validate ULYS tokens")]
 #[command(args_conflicts_with_subcommands = true)]
 struct Cli {
+	/// Subcommand to run.
 	#[command(subcommand)]
 	command: Option<Command>,
 
+	/// Arguments for the default command.
 	#[command(flatten)]
 	generate: GenerateArgs,
 }
 
+/// Subcommands.
 #[derive(Subcommand)]
 enum Command {
-	/// Generate ULYS (default command)
+	/// Generate ULYS (default command).
 	Generate(GenerateArgs),
 
-	/// Validate ULYS and show their details
+	/// Validate ULYS and show their details.
 	Validate {
-		/// ULYS or UUID values
+		/// ULYS or UUID values.
 		#[arg(required = true, value_name = "ID")]
 		values: Vec<String>,
 	},
 }
 
+/// Arguments of the generate command.
 #[derive(Args)]
 struct GenerateArgs {
-	/// Number of ULYS to generate
+	/// Number of ULYS to generate.
 	#[arg(short = 'n', long, default_value_t = 1, value_name = "COUNT")]
 	count: usize,
 
-	/// Show the ULYS as UUID
+	/// Show the ULYS as UUID.
 	#[arg(short, long)]
 	uuid: bool,
 }
@@ -138,13 +143,16 @@ fn parse(value: &str) -> Option<Ulys> {
 		.or_else(|| Uuid::parse_str(value).ok().map(Ulys::from))
 }
 
+/// Returns `yes` or `no`.
 fn yes_no(value: bool) -> &'static str {
 	if value { "yes" } else { "no" }
 }
 
 /// Formats a time as `YYYY-MM-DD HH:MM:SS UTC`.
 fn format_utc(time: SystemTime) -> String {
-	let seconds = time.duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs());
+	let seconds = time
+		.duration_since(UNIX_EPOCH)
+		.map_or(0, |elapsed| elapsed.as_secs());
 	let (year, month, day) = civil_from_days(seconds / 86_400);
 	let seconds = seconds % 86_400;
 	format!(
@@ -173,21 +181,24 @@ fn civil_from_days(days: u64) -> (u64, u64, u64) {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use core::slice;
+	use xxhash_rust::xxh3::xxh3_64;
 
 	/// Makes a ULYS with a correct checksum at the given time, in milliseconds since the Unix
 	/// epoch.
 	fn ulys_at(ms: u64) -> Ulys {
 		let data = u128::from(ms) << 80;
-		let hash = xxhash_rust::xxh3::xxh3_64(&data.to_be_bytes());
+		let hash = xxh3_64(&data.to_be_bytes());
 		Ulys(data | u128::from(hash >> 32))
 	}
 
+	/// Formats the given Unix seconds as UTC.
 	fn utc(seconds: u64) -> String {
 		format_utc(UNIX_EPOCH + Duration::from_secs(seconds))
 	}
 
 	#[test]
-	fn test_format_utc() {
+	fn format_utc_works() {
 		assert_eq!(utc(0), "1970-01-01 00:00:00 UTC");
 		assert_eq!(utc(951_782_400), "2000-02-29 00:00:00 UTC");
 		assert_eq!(utc(1_000_000_000), "2001-09-09 01:46:40 UTC");
@@ -196,13 +207,13 @@ mod tests {
 	}
 
 	#[test]
-	fn test_time_limits() {
+	fn time_limits() {
 		assert_eq!(utc(Ulys::MIN_TIME_MS / 1000), "2020-01-01 00:00:00 UTC");
 		assert_eq!(utc(Ulys::MAX_TIME_MS / 1000), "2101-01-01 00:00:00 UTC");
 	}
 
 	#[test]
-	fn test_problems() {
+	fn problems_works() {
 		let valid = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").unwrap();
 		let invalid = Ulys::from_string("068dkwmn3a441g20mzbsmy0000").unwrap();
 
@@ -220,7 +231,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_parse() {
+	fn parse_works() {
 		let ulys = Ulys::new();
 		let uuid = Uuid::from(ulys);
 
@@ -231,12 +242,12 @@ mod tests {
 	}
 
 	#[test]
-	fn test_validate_exit_code() {
-		let valid = "068dkwmn3a441g20mzbsmyk5b8".to_string();
-		let invalid = "068dkwmn3a441g20mzbsmy0000".to_string();
+	fn validate_exit_code() {
+		let valid = "068dkwmn3a441g20mzbsmyk5b8".to_owned();
+		let invalid = "068dkwmn3a441g20mzbsmy0000".to_owned();
 		let mut out = Vec::new();
 
-		assert_eq!(validate(std::slice::from_ref(&valid), &mut out).unwrap(), 0);
+		assert_eq!(validate(slice::from_ref(&valid), &mut out).unwrap(), 0);
 		assert_eq!(
 			validate(&[valid.clone(), invalid], &mut out).unwrap(),
 			INVALID
