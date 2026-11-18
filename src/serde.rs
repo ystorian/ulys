@@ -10,6 +10,7 @@
 
 use crate::Ulys;
 use base32::Alphabet;
+use serde::de::Error as DeError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Serializes a ULYS as a base32 string.
@@ -39,7 +40,7 @@ impl<'de> Deserialize<'de> for Ulys {
 		D: Deserializer<'de>,
 	{
 		let deserialized_str = String::deserialize(deserializer)?;
-		Self::from_string(&deserialized_str).map_err(serde::de::Error::custom)
+		Self::from_string(&deserialized_str).map_err(DeError::custom)
 	}
 }
 
@@ -63,7 +64,7 @@ impl<'de> Deserialize<'de> for Ulys {
 /// ```
 pub mod ulys_as_u128 {
 	use crate::Ulys;
-	use serde::{Deserialize, Deserializer, Serialize, Serializer};
+	use serde::{Deserialize as _, Deserializer, Serialize as _, Serializer};
 
 	/// Serializes a ULYS as a u128 type.
 	///
@@ -111,7 +112,8 @@ pub mod ulys_as_u128 {
 /// ```
 pub mod ulys_as_uuid {
 	use crate::Ulys;
-	use serde::{Deserialize, Deserializer, Serialize, Serializer};
+	use serde::de::Error as DeError;
+	use serde::{Deserialize as _, Deserializer, Serialize as _, Serializer};
 	use uuid::Uuid;
 
 	/// Converts the ULYS to a UUID and serializes it as a string.
@@ -137,7 +139,7 @@ pub mod ulys_as_uuid {
 		D: Deserializer<'de>,
 	{
 		let de_string = String::deserialize(deserializer)?;
-		let de_uuid = Uuid::parse_str(&de_string).map_err(serde::de::Error::custom)?;
+		let de_uuid = Uuid::parse_str(&de_string).map_err(DeError::custom)?;
 		Ok(Ulys::from(de_uuid))
 	}
 }

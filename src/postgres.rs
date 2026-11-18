@@ -1,7 +1,9 @@
 // src/postgres.rs
 
+//! Conversion to and from the `PostgreSQL` `UUID` type.
+
 use crate::Ulys;
-use bytes::BufMut;
+use bytes::BufMut as _;
 use bytes::BytesMut;
 use postgres_types::accepts;
 use postgres_types::to_sql_checked;
@@ -35,21 +37,21 @@ impl ToSql for Ulys {
 mod tests {
 	use super::*;
 	use crate::Ulys;
-	use postgres_types::{FromSql, Type};
-	use std::io::Read;
+	use postgres_types::Type;
+	use std::io::Read as _;
 
 	#[test]
 	fn postgres_cycle() {
 		let ulys = Ulys::from_string("068dkwmn3a441g20mzbsmyk5b8").unwrap();
 
-		let mut w = bytes::BytesMut::new();
-		let t = &Type::UUID;
-		let _ = ulys.to_sql(t, &mut w);
+		let mut buf = bytes::BytesMut::new();
+		let ty = &Type::UUID;
+		let _ = ulys.to_sql(ty, &mut buf);
 
-		assert_eq!(16, w.len());
+		assert_eq!(16, buf.len());
 
-		let bs = w.bytes().map(|v| v.unwrap()).collect::<Vec<u8>>();
+		let bs = buf.bytes().map(|byte| byte.unwrap()).collect::<Vec<u8>>();
 
-		assert_eq!(ulys, Ulys::from_sql(t, &bs).unwrap());
+		assert_eq!(ulys, Ulys::from_sql(ty, &bs).unwrap());
 	}
 }
